@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "771046917910",
+    "project_id": "attendance-ec05d",
+    "storage_bucket": "attendance-ec05d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:771046917910:android:b115cad2aadcdffbd03237",
+        "android_client_info": {
+          "package_name": "com.lmsPrismatic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDC0m9VEfDwf2fBA1MDTxvP7zCy07b4j_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:771046917910:android:268f2b533d5d0e68d03237",
+        "android_client_info": {
+          "package_name": "com.mrm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDC0m9VEfDwf2fBA1MDTxvP7zCy07b4j_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:771046917910:android:6d756ece52e793f6d03237",
+        "android_client_info": {
+          "package_name": "my_package.v1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDC0m9VEfDwf2fBA1MDTxvP7zCy07b4j_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,48 @@
+import {mvs, width} from 'config/metrices';
+import {StyleSheet} from 'react-native';
+import {colors} from 'config/colors';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  topcontainer: {
+    width: '100%',
+    height: '19%',
+    backgroundColor: colors.primary,
+  },
+
+  
+  infoContainer: {
+    // width: '90%',
+    paddingHorizontal: mvs(20),
+    backgroundColor: colors.silver,
+    marginHorizontal: mvs(20),
+    marginVertical: mvs(30),
+    borderRadius: mvs(10),
+    paddingVertical: mvs(30),
+  },
+  documentContainer:{
+    alignItems:'center',
+    justifyContent:'center',
+  },
+  thumbnail:{
+    width:'100%',
+    height:mvs(120),
+    justifyContent:'center',
+    // borderWidth:mvs(1),
+    borderRadius:mvs(10),
+  },
+  play:{
+    width:mvs(50),
+    height:mvs(50),
+    alignSelf:'center',
+    position:'absolute',
+    top:mvs(35),
+  }
+
+
+
+});
+export default styles;
