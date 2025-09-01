@@ -65,7 +65,7 @@ export {default as sendicon} from './sendicon.png';
 export {default as messagelogo} from './messagelogo.png';
 export {default as editprofileimg} from './user-avatar.png';
 // export {default as help} from './help.png';
-// 
+//
 //////////////hrm app images/////////////
 export {default as splashbackgroundimg} from './hrmimages/splashbackground.png';
 export {default as appiconimg} from './hrmimages/appicon.png';
