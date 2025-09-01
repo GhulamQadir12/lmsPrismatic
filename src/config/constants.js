@@ -10,6 +10,7 @@ import {
   VehilcepartsSVG,
 } from 'assets/icons';
 import * as IMG from 'assets/images';
+import { useAppSelector } from 'hooks/use-store';
 import moment from 'moment';
 export const DATE_FORMAT = {
   yyyy_mm_dd: 'YYYY-MM-DD',
@@ -24,6 +25,7 @@ export const STORAGEKEYS = {
   token: '@token',
   lang: '@language',
   configData: '@configData',
+  quizStart: '@quizStart',
 };
 export const weekDays = [
   'Monday',
@@ -36,11 +38,7 @@ export const weekDays = [
 ];
 
 export const HomeList = [
-  {
-    image: IMG.invoice,
-    title: 'Fee Invoice Categories',
-    moveTo: 'FeeInvoiceCategory',
-  },
+
   {
     image: IMG.lms,
     title: 'LMS',
@@ -56,6 +54,17 @@ export const HomeList = [
     title: 'Daily Planner',
     moveTo: 'DailyPlanner',
 
+  },
+  {
+    image: IMG.attendance,
+    title: 'Attendance',
+    // moveTo: 'DailyPlanner',
+
+  },
+    {
+    image: IMG.invoice,
+    title: 'Fee Invoice Categories',
+    moveTo: 'FeeInvoiceCategory',
   },
 
  
@@ -76,23 +85,28 @@ export const HomeList = [
   //   title: 'Certificate',
   // },
 ];
-export const ONBOARDING_LIST = [
-  {
-    image: IMG.rocket,
-    title: 'quick_search',
-    desc: 'Pick Up Your Order',
-  },
-  {
-    image: IMG.vehicle,
-    title: 'fast_shipping',
-    desc: 'Pick Up Your Order',
-  },
-  {
-    image: IMG.mobile,
-    title: 'free_rides',
-    desc: 'Pick Up Your Order',
-  },
-];
+export const useOnboardingList = () => {
+  const configData = useAppSelector(s => s?.user?.configData);
+  const businessName = configData?.business_name || 'N/A';
+
+  return [
+    {
+      image: IMG.onboarding2,
+      title: `Welcome to ${businessName}`,
+      desc: 'Follow a clear roadmap from start to success. Learn, test, and grow at your own pace with confidence.',    
+    },
+    {
+      image: IMG.onboarding3,
+      title: 'All in One Learning Dashboard',
+      desc: 'Everything you need in one place. Track progress, manage courses, and stay organized effortlessly.',    
+    },
+    {
+      image: IMG.onboarding1,
+      title: 'SmartBot Your AI Learning Assistant',
+      desc: 'Let our intelligent chatbot guide your journey. Get instant answers and personalized support, 24/7.',    
+    },
+  ];
+};
 export const SERVICE_LIST = [
   {
     icon: FurnitureSVG,

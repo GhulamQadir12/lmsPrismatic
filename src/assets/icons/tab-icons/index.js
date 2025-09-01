@@ -32,5 +32,5 @@ export {default as AnnouncementActive} from '../tab-icons/announcement_inactice.
 export {default as Announcement} from '../tab-icons/announcement_active.svg';
 export {default as HelpSupportListActive} from '../tab-icons/HelpDesk.svg';
 export {default as HelpSupportList} from '../tab-icons/HelpDesk_active.svg';
-export {default as AiChat} from '../tab-icons/aiChat.svg';
-export {default as AiChatActive} from '../tab-icons/aiChatActive.svg';
+export {default as BotChat} from '../tab-icons/aiChat.svg';
+export {default as BotChatActive} from '../tab-icons/aiChatActive.svg';

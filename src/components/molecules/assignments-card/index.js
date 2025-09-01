@@ -1,337 +1,282 @@
 import {mvs} from 'config/metrices';
-import React, { useEffect } from 'react';
-import {Alert, TouchableOpacity, View} from 'react-native';
+import React from 'react';
+import {TouchableOpacity, View} from 'react-native';
 import Regular from 'typography/regular-text';
 import styles from './styles';
-import {ClockIcon, Tick} from 'assets/icons';
 import {Row} from 'components/atoms/row';
 import {colors} from 'config/colors';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import Bold from 'typography/bold-text';
 import Medium from 'typography/medium-text';
 import moment from 'moment';
-import {Checkbox} from 'components/atoms/checkbox';
 import {PrimaryButton} from 'components/atoms/buttons';
-import RNFetchBlob from 'rn-fetch-blob';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {navigate} from 'navigation/navigation-ref';
-import { disallowScreenshot } from 'react-native-screen-capture';
+import {downloadFile, getFileExtension, renderFileIcon} from 'utils';
+import {URLS} from 'services/api/api-urls';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const AssignmentsCard = ({item}) => {
+const AssignmentsCard = ({item, questionNumber, role, isExpanded, onToggle}) => {
+    const [downloadLoading, setDownloadLoading] = React.useState(false);
+    const [qfDownloadLoading, setQfDownloadLoading] = React.useState(false);
+    console.log("doen",downloadLoading)
+
+  const handleSubmittedFileDownload = async () => {
+    if (!item?.submitted_file_url) return;
+    const fileName = item.submitted_file_url.split('/').pop() || 'submitted_assignment.pdf';
+    const fileUrl = item.submitted_file_url;
+    downloadFile(fileUrl, fileName, {
+      notificationTitle: 'Downloading submitted assignment',
+      onSuccess: path => setDownloadLoading(false),
+      onBeforeDownload: () => setDownloadLoading(true),
+       onError: error => {
+      // don’t use console.error
+      setDownloadLoading(false);
+      Alert.alert(
+        'Download failed',
+        error?.message || 'Something went wrong while downloading.'
+      );
+    },
+    });
+  };
+
   const handleDownload = async () => {
-    const {fs, config} = RNFetchBlob;
-    const {DownloadDir} = fs.dirs;
-
-    const fileName = item?.assignment_img || 'assignment.pdf';
-    const fileUrl = `https://ace.prismaticcrm.com/upload/assignments/${fileName}`;
-    const destPath = `${DownloadDir}/${fileName}`;
-
-    try {
-      // Check if file already exists
-      const exists = await fs.exists(destPath);
-
-      if (exists) {
-        // Ask user to re-download
-        Alert.alert(
-          'File Already Downloaded',
-          'This file already exists. Do you want to re-download it?',
-          [
-            {
-              text: 'Cancel',
-              style: 'cancel',
-            },
-            {
-              text: 'Re-Download',
-              onPress: () => downloadFile(fileUrl, destPath),
-            },
-          ],
-        );
-      } else {
-        // File doesn't exist, proceed to download
-        downloadFile(fileUrl, destPath);
-      }
-    } catch (err) {
-      console.error('Error checking file existence:', err);
-    }
+    if (!item?.assignment_img) return;
+    const fileName = item.assignment_img || 'assignment.pdf';
+    const fileUrl = `${URLS.docs.download_assignment}${fileName}`;
+    downloadFile(fileUrl, fileName, {
+      notificationTitle: 'Downloading assignment',
+       onSuccess: path => setQfDownloadLoading(false),
+      onError: error => setQfDownloadLoading(false),
+      onBeforeDownload: () => setQfDownloadLoading(true),
+    });
   };
 
-  const downloadFile = (url, path) => {
-    const {config} = RNFetchBlob;
-
-    config({
-      fileCache: true,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        path,
-        description: 'Downloading file...',
-      },
-    })
-      .fetch('GET', url)
-      .then(res => {
-        console.log('File downloaded to:', res.path());
-        Alert.alert('Download complete!');
-      })
-      .catch(error => {
-        console.error('Download failed:', error);
-        Alert.alert('Download failed!');
-      });
-  };
-
-  const fileExtension = item.assignment_img?.split('.').pop().toLowerCase();
-
-  const renderFileIcon = () => {
-    if (fileExtension === 'pdf') {
-      return (
-        <FontAwesome name="file-pdf-o" size={mvs(20)} color={colors.red} />
-      );
-    } else if (
-      ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(fileExtension)
-    ) {
-      return (
-        <FontAwesome
-          name="file-word-o" // You can choose different icons if needed: file-powerpoint-o, file-excel-o
-          size={mvs(20)}
-          color={colors.red} // or a color like '#2B579A'
-        />
-      );
+  const getStatusInfo = () => {
+    if (item?.is_submitted) {
+      return { color: colors.green, text: 'Submitted' };
+    } else if (moment(item?.submission_date, 'DD-MMM-YYYY').isBefore(moment(), 'day')) {
+      return { color: colors.red, text: 'Missing' };
     } else {
-      return null; // Or a default icon if needed
+      return { color: colors.yellow, text: 'Pending' };
     }
   };
 
-  const dateTimeString = item?.created_at;
-
-  const dateOnly = moment(dateTimeString).format('YYYY-MM-DD');
-
-  console.log(dateOnly); // Output: 2025-07-08
-  useEffect(() => {
-    console.log('Disabling screenshots...');
-    disallowScreenshot(true);
-    return () => {
-      console.log('Re-enabling screenshots...');
-      disallowScreenshot(false);
-    };
-  }, []);
+  const statusInfo = getStatusInfo();
 
   return (
-    <View style={styles.infoContainer}>
-      <Row>
-        <View style={{flex: 1}}>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Id :'}
-                numberOfLines={3}
-              />
-            </View>
-            <View style={{flex: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.id || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Assignment Title :'}
-                numberOfLines={3}
-              />
-            </View>
-            <View style={{flex: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.add_title || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Faculty :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.faculty_name || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={onToggle}
+      style={styles.container}
+    >
+      <View style={styles.cardHeader}>
+        <View style={[styles.assignmentNumber,{
+    backgroundColor: colors.primary,
+        }]}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.white}
+            label={`${questionNumber}`}
+          />
+        </View>
+        
+        <View style={styles.headerContent}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.primary}
+            label={item?.add_title || 'Untitled Assignment'}
+            numberOfLines={1}
+            style={styles.assignmentTitle}
+          />
+          <Medium
+            fontSize={mvs(12)}
+            color={colors.cyan}
+            label={`Due: ${item?.submission_date}`}
+          />
+        </View>
+        
+        <View style={styles.headerRight}>
+          <View style={[styles.statusBadge, {backgroundColor: statusInfo.color}]}>
+            <Medium
+              fontSize={mvs(10)}
+              color={colors.white}
+              label={statusInfo?.text}
+              style={styles.statusText}
+            />
+          </View>
+          <Icon 
+            name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
+            size={mvs(24)} 
+            color={colors.primary} 
+          />
+        </View>
+      </View>
 
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
+      {isExpanded && (
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="person" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
+                fontSize={mvs(13)}
                 color={colors.placeholder}
-                label={'Submission Date :'}
+                label={'Faculty:'}
+                style={styles.labelText}
               />
             </View>
-            <View style={{flexGrow: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.submission_date || ''}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Subject :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.program_name || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Question File :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Row
-                style={{
-                  justifyContent: 'flex-start',
-                  gap: mvs(10),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity onPress={handleDownload}>
-                  <Medium
-                    fontSize={mvs(14)}
-                    color={colors.red}
-                    label={item?.assignment_img || ''}
-                    style={{textDecorationLine: 'underline'}}
-                    numberOfLines={3}
-                  />
-                </TouchableOpacity>
-                {renderFileIcon()}
-              </Row>
-            </View>
-          </Row>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.faculty_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
 
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="event" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Due Date:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.submission_date || 'N/A'}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="menu-book" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Subject:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.program_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="description" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Question File:'}
+                style={styles.labelText}
+              />
+            </View>
+            <TouchableOpacity 
+              onPress={handleDownload}
+              style={styles.fileContainer}
+              disabled={!item?.assignment_img || qfDownloadLoading}
+            >
+              {renderFileIcon(
+                getFileExtension(item?.assignment_img),
+                mvs(20),
+                colors.primary,
+              )}
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                // label={item?.assignment_img || 'N/A'}
+                  label={
+                  qfDownloadLoading
+                    ? 'Downloading...'
+                    : item?.assignment_img || 'No file attached'
+                }
+                numberOfLines={2}
+                style={styles.fileText}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="file-upload" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
                 color={colors.placeholder}
                 label={'Submitted File :'}
+                style={styles.labelText}
+                numberOfLines={2}
               />
             </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Row
-                style={{
-                  justifyContent: 'flex-start',
-                  gap: mvs(10),
-                  alignItems: 'center',
-                }}>
-                {item?.is_submitted ? (
-                  <>
-                    <TouchableOpacity onPress={handleDownload}>
-                      <Medium
-                        fontSize={mvs(14)}
-                        color={colors.red}
-                        label={
-                          item?.submitted_file_url?.split('/').pop() ||
-                          'No file found'
-                        }
-                        style={{textDecorationLine: 'underline'}}
-                        numberOfLines={3}
-                      />
-                    </TouchableOpacity>
-                    {renderFileIcon()}
-                  </>
-                ) : moment(item?.submission_date, 'DD-MMM-YYYY').isBefore(
-                    moment(),
-                    'day',
-                  ) ? (
-                  <Medium
-                    fontSize={mvs(14)}
-                    color={colors.red}
-                    label={'Missing'}
-                  />
-                ) : null}
-              </Row>
-            </View>
-          </Row>
-
-          <Row>
-            <View></View>
-            {!item?.is_submitted ? (
-              moment(item?.submission_date, 'DD-MMM-YYYY').isSameOrAfter(
-                moment(),
-                'day',
-              ) ? (
-              <PrimaryButton
-                title="Upload"
-                containerStyle={{
-                  width: '30%',
-                  borderRadius: mvs(5),
-                  backgroundColor: colors.green,
-                  marginTop: mvs(10),
-                }}
-                onPress={() => navigate('AssignmentSubmission', {item})}
-              />
-              ) : null
-            ) : moment(item?.submission_date, 'DD-MMM-YYYY').isSameOrAfter(
-                moment(),
-                'day',
-              ) ? (
-              <PrimaryButton
-                title="Update"
-                containerStyle={{
-                  width: '30%',
-                  borderRadius: mvs(5),
-                  backgroundColor: colors.red,
-                  marginTop: mvs(10),
-                }}
-                onPress={() => navigate('AssignmentSubmission', {item})}
-              />
+            {item?.is_submitted ? (
+              <TouchableOpacity 
+              disabled={!item?.submitted_file_url || downloadLoading}
+                onPress={handleSubmittedFileDownload}
+                style={styles.fileContainer}
+              >
+                {renderFileIcon(
+                  getFileExtension(item?.submitted_file_url),
+                  mvs(20),
+                  colors.primary,
+                )}
+                <Medium
+                  fontSize={mvs(14)}
+                  color={colors.primary}
+                  label={
+                  downloadLoading
+                    ? 'Downloading...'
+                    : item?.submitted_file_url?.split('/').pop() || 'No file attached'
+                }
+                  numberOfLines={2}
+                  style={styles.fileText}
+                />
+              </TouchableOpacity>
             ) : (
-              <PrimaryButton
-                title="Submitted"
-                disabled={true}
-                containerStyle={{
-                  width: '30%',
-                  borderRadius: mvs(5),
-                  backgroundColor: colors.primary,
-                  marginTop: mvs(10),
-                }}
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.cyan}
+                label="Not submitted yet"
+                style={styles.valueText}
               />
             )}
-          </Row>
+          </View>
+
+          {role === 'student' && (
+            <View style={styles.buttonContainer}>
+              {!item?.is_submitted ? (
+                moment(item?.submission_date, 'DD-MMM-YYYY').isSameOrAfter(moment(), 'day') ? (
+                  <PrimaryButton
+                    title="Upload Assignment"
+                    containerStyle={styles.uploadButton}
+                    onPress={() => navigate('AssignmentSubmission', {item})}
+                  />
+                ) : null
+              ) : moment(item?.submission_date, 'DD-MMM-YYYY').isSameOrAfter(moment(), 'day') ? (
+                <PrimaryButton
+                  title="Update Submission"
+                  containerStyle={styles.updateButton}
+                  onPress={() => navigate('AssignmentSubmission', {item})}
+                />
+              ) : (
+                <PrimaryButton
+                  title="Submitted"
+                  disabled={true}
+                  containerStyle={[styles.submittedButton,{
+                        backgroundColor: colors.primary
+                  }]}
+                />
+              )}
+            </View>
+          )}
         </View>
-      </Row>
-    </View>
+      )}
+    </TouchableOpacity>
   );
 };
 

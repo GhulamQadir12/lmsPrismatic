@@ -33,7 +33,7 @@ const OtpModal = ({
         </TouchableOpacity>
         <Medium
           numberOfLines={2}
-          label={t('verification-otp')}
+          label={t('Verification Otp')}
           style={{
             fontSize: mvs(20),
             color: colors.primary,

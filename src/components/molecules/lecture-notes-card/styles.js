@@ -1,43 +1,89 @@
+// Updated styles.js
 import {colors} from 'config/colors';
 import {mvs} from 'config/metrices';
 import {StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.halfwhiteone,
-    width: '100%',
-    padding: mvs(10),
-    marginTop: mvs(20),
-    borderRadius: mvs(10),
-    shadowColor: '#000',
+    backgroundColor: colors.white,
+    borderRadius: mvs(12),
+    marginBottom: mvs(15),
+    marginHorizontal: mvs(15),
+    shadowColor: '#175884',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
     elevation: 5,
+    borderWidth: 1,
+    borderColor: '#f0f4f8',
+    overflow: 'hidden',
   },
-  statusContainer: {
-    gap: mvs(10),
+  cardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    padding: mvs(15),
+    backgroundColor: '#f8fafd',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e8f2fa',
   },
-  line: {
-    width: '100%',
-    height: 1,
+  lectureNumber: {
+    width: mvs(30),
+    height: mvs(30),
+    borderRadius: mvs(15),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: mvs(12),
+  },
+  headerContent: {
+    flex: 1,
+    marginRight: mvs(10),
+  },
+  lectureTitle: {
+    fontWeight: '600',
+    marginBottom: mvs(2),
+  },
+  detailsContainer: {
+    padding: mvs(15),
     backgroundColor: colors.white,
-    marginTop: mvs(20),
   },
-    infoContainer: {
-    // width: '90%',
-    paddingHorizontal: mvs(20),
-    backgroundColor: colors.silver,
-    marginHorizontal: mvs(20),
-    marginVertical: mvs(10),
-    borderRadius: mvs(10),
-    paddingVertical: mvs(30),
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: mvs(12),
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '30%',
+    minWidth: mvs(80),
+  },
+  labelText: {
+    marginLeft: mvs(5),
+    fontWeight: '500',
+  },
+  valueText: {
+    flex: 1,
+    marginLeft: mvs(10),
+    fontWeight: '400',
+  },
+  fileContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: mvs(10),
+    padding: mvs(8),
+    backgroundColor: '#f8f9fa',
+    borderRadius: mvs(6),
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  fileText: {
+    marginLeft: mvs(8),
+    flex: 1,
   },
 });
+
 export default styles;

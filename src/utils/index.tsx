@@ -14,10 +14,174 @@ import ImagePicker from 'react-native-image-crop-picker';
 import uuid from 'react-native-uuid';
 import {NavigationProps} from '../types/navigation-types';
 import Geocoder from 'react-native-geocoding';
-
+import RNFetchBlob from 'rn-fetch-blob';
 import DocumentPicker from 'react-native-document-picker';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {colors} from 'config/colors';
 
 Geocoder.init('AIzaSyCbFQqjZgQOWRMuQ_RpXU0kGAUIfJhDw98');
+
+type FileDownloadOptions = {
+  onSuccess?: (path: string) => void;
+  onError?: (error: any) => void;
+   onBeforeDownload?: () => void;
+  notificationTitle?: string;
+  notificationDescription?: string;
+};
+
+export const downloadFile = async (
+  url: string,
+  fileName: string,
+  options?: FileDownloadOptions,
+) => {
+  const { fs } = RNFetchBlob;
+  const { DownloadDir } = fs.dirs;
+  const destPath = `${DownloadDir}/${fileName}`;
+
+  try {
+    const exists = await fs.exists(destPath);
+
+    const alertTitle = exists
+      ? 'File Already Downloaded'
+      : 'Download File';
+    const alertMessage = exists
+      ? 'This file already exists. Do you want to re-download it?'
+      : 'Do you want to download this file?';
+
+    Alert.alert(
+      alertTitle,
+      alertMessage,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: exists ? 'Re-Download' : 'Download',
+          onPress: () => {options?.onBeforeDownload?.();
+            startDownload(url, destPath, options)}
+        },
+      ]
+    );
+  } catch (err) {
+    console.error('Error checking file existence:', err);
+    options?.onError?.(err);
+  }
+};
+
+
+// const startDownload = (
+//   url: string,
+//   path: string,
+//   options?: FileDownloadOptions,
+// ) => {
+//   const {config} = RNFetchBlob;
+
+//   config({
+//     fileCache: true,
+//     addAndroidDownloads: {
+//       useDownloadManager: true,
+//       notification: true,
+//       path,
+//       title: options?.notificationTitle || 'Downloading file',
+//       description:
+//         options?.notificationDescription || 'File download in progress',
+//     },
+//   })
+//     .fetch('GET', url)
+//     .then(res => {
+//       console.log('File downloaded to:', res.path());
+//       Alert.alert('Download complete!', `File saved to: ${res.path()}`);
+//       options?.onSuccess?.(res.path());
+//     })
+//     .catch(error => {
+//       console.error('Download failed:', error);
+//       Alert.alert(
+//         'Download failed!',
+//         error.message || 'Unknown error occurred',
+//       );
+//       options?.onError?.(error);
+//     });
+// };
+
+const startDownload = (url: string, path: string, options?: FileDownloadOptions) => {
+  const { config } = RNFetchBlob;
+
+  try {
+    config({
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        path,
+        title: options?.notificationTitle || 'Downloading file',
+        description: options?.notificationDescription || 'File download in progress',
+      },
+    })
+      .fetch('GET', url)
+      .then(res => {
+        console.log('File downloaded to:', res.path());
+        Alert.alert('Download complete!', `File saved to: ${res.path()}`);
+        options?.onSuccess?.(res.path());
+      })
+      .catch(error => {
+        console.log('Download failed:', error); // ✅ safe logging
+        Alert.alert(
+          'Download failed',
+          error?.message || 'Unknown error occurred while downloading.'
+        );
+        options?.onError?.(error);
+      });
+  } catch (error: any) {
+    console.log('Unexpected error:', error); // ✅ safe logging
+    Alert.alert('Download failed', error?.message || 'Unexpected error occurred.');
+    options?.onError?.(error);
+  }
+};
+
+export const hexToRgba = (hex, opacity = 1) => {
+  let r = 0, g = 0, b = 0;
+
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else if (hex.length === 7) {
+    r = parseInt(hex[1] + hex[2], 16);
+    g = parseInt(hex[3] + hex[4], 16);
+    b = parseInt(hex[5] + hex[6], 16);
+  }
+
+  return `rgba(${r},${g},${b},${opacity})`;
+};
+
+
+export const getFileExtension = (filename?: string) => {
+  if (!filename) return '';
+  return filename.split('.').pop()?.toLowerCase() || '';
+};
+
+export const renderFileIcon = (
+  fileExtension: string,
+  size = 20,
+  color = colors.red,
+) => {
+  if (fileExtension === 'pdf') {
+    return <FontAwesome name="file-pdf-o" size={size} color={color} />;
+  } else if (['doc', 'docx'].includes(fileExtension)) {
+    return <FontAwesome name="file-word-o" size={size} color={color} />;
+  } else if (['ppt', 'pptx'].includes(fileExtension)) {
+    return <FontAwesome name="file-powerpoint-o" size={size} color={color} />;
+  } else if (['xls', 'xlsx'].includes(fileExtension)) {
+    return <FontAwesome name="file-excel-o" size={size} color={color} />;
+  } else if (
+    ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(fileExtension)
+  ) {
+    return <FontAwesome name="file-image-o" size={size} color={color} />;
+  } else {
+    return <FontAwesome name="file-o" size={size} color={color} />;
+  }
+};
 
 export const pickDocument = async () => {
   try {
@@ -128,7 +292,6 @@ export const UTILS = {
       console.log('error =>', error);
     }
   },
-
 
   getItem: async (key: string) => {
     try {
@@ -272,47 +435,49 @@ export const UTILS = {
     return error?.message || error?.code;
   },
   returnError2: (error: any) => {
-  // 1. Handle request errors (like network issues)
-  if (error?.response?.request) {
-    const { _response } = error.response.request;
-    try {
-      const parsed = JSON.parse(_response);
-      
-      // If it's a validation error, return the first error message directly
-      if (parsed.errors) {
-        const firstErrorKey = Object.keys(parsed.errors)[0];
-        return parsed.errors[firstErrorKey][0]; // "The selected email is invalid."
+    // 1. Handle request errors (like network issues)
+    if (error?.response?.request) {
+      const {_response} = error.response.request;
+      try {
+        const parsed = JSON.parse(_response);
+
+        // If it's a validation error, return the first error message directly
+        if (parsed.errors) {
+          const firstErrorKey = Object.keys(parsed.errors)[0];
+          return parsed.errors[firstErrorKey][0]; // "The selected email is invalid."
+        }
+
+        return parsed.message || 'Request failed';
+      } catch (e) {
+        return _response || 'Request failed';
       }
-      
-      return parsed.message || "Request failed";
-    } catch (e) {
-      return _response || "Request failed";
     }
-  }
-  
-  // 2. Handle response errors (API validation/errors)
-  else if (error.response) {
-    const { data } = error.response;
-    
-    // Handle validation errors
-    if (data?.errors) {
-      const firstErrorKey = Object.keys(data.errors)[0];
-      return data.errors[firstErrorKey][0]; // "The selected email is invalid."
+
+    // 2. Handle response errors (API validation/errors)
+    else if (error.response) {
+      const {data} = error.response;
+
+      // Handle validation errors
+      if (data?.errors) {
+        const firstErrorKey = Object.keys(data.errors)[0];
+        return data.errors[firstErrorKey][0]; // "The selected email is invalid."
+      }
+
+      return (
+        data?.message || `Request failed with status ${error.response.status}`
+      );
     }
-    
-    return data?.message || `Request failed with status ${error.response.status}`;
-  }
-  
-  // 3. Handle no response (network issues)
-  else if (error.request) {
-    return "Network error - no response received";
-  }
-  
-  // 4. Handle other errors
-  else {
-    return error.message || "An unknown error occurred";
-  }
-},
+
+    // 3. Handle no response (network issues)
+    else if (error.request) {
+      return 'Network error - no response received';
+    }
+
+    // 4. Handle other errors
+    else {
+      return error.message || 'An unknown error occurred';
+    }
+  },
   capitalizeFirst: (str: string) =>
     str?.charAt(0)?.toUpperCase() + str?.slice(1),
   returnStringify: (data: object) => JSON.stringify(data),
@@ -502,7 +667,7 @@ export const UTILS = {
         // compressImageMaxWidth: 1500,
         // compressImageMaxHeight: 1000,
       });
-      
+
       const dotIndex = image?.path?.lastIndexOf('.');
       const extension = image?.path.substring(dotIndex + 1);
       return {

@@ -121,6 +121,7 @@ const Splash = (props: props) => {
     try {
         const data1 = await UTILS.getItem(STORAGEKEYS.configData);
     console.log('🔍 Raw configData from storage:', data1);
+    const isAppLaunched = await UTILS.getItem('hasLaunched');
 
     if (data1) {
       const configData = typeof data1 === 'string' ? JSON.parse(data1) : data1;
@@ -128,12 +129,17 @@ const Splash = (props: props) => {
       // Check if we have valid config data (either from API or storage)
       const screen = configData ? 'Login' : 'Login'; // You might want different logic here
     }
-      setTimeout(() => {
+    if (isAppLaunched) {
         navigation?.replace('Login');
-      }, 2000);
+      } else {
+        setTimeout(() => {
+          navigation?.replace('Onboarding');
+        }, 2000);
+      }
     } catch (error) {
       console.error('Navigation error:', error);
-      navigation?.replace('Login'); // Fallback screen
+      // navigation?.replace('Login'); // Fallback screen
+      navigation?.replace('Onboarding'); // Fallback screen
     }
   };
   // }, []);
@@ -142,7 +148,7 @@ const Splash = (props: props) => {
     <View style={{...styles.container}}>
        <StatusBar
               translucent={false}
-              backgroundColor={colors.primary}
+              backgroundColor={colors.white}
               barStyle={'white'}
             />
       {loading ? (
@@ -159,7 +165,7 @@ const Splash = (props: props) => {
               alignItems: 'center',
               width: '100%',
               height: '100%',
-              backgroundColor: colors.primary,
+              backgroundColor: colors.white,
               // marginTop: '87%',
             }}>
             <Image

@@ -11,21 +11,32 @@ const styles = StyleSheet.create({
     marginTop: mvs(20),
   },
 
-  backgroundImage: {
+ backgroundImage: {
+    flex: 1,
     width: '100%',
-    height: mvs(423),
+    height: '100%',
+  },
+  gradientOverlay: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+    lottie: {
+      width: '80%',
+      height: '80%',
+    },
+      lottiecontainer: {
+    height: '60%',
+    alignItems: 'center',
+    justifyContent:'center'
   },
   welcomeText: {
     alignSelf: 'center',
-    marginTop: mvs(20),
+    // marginTop: mvs(10),
   },
 
 
-  lottie: {
-    width: '100%',
-    height: '80%',
-  },
-  lottiecontainer:{ height: '60%',alignItems:'center'},
+
   bottomContainer: {
     backgroundColor: colors.white,
     width: '100%',

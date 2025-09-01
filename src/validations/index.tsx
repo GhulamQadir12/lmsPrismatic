@@ -4,10 +4,22 @@
 //   return re.test(String(email).toLowerCase());
 // };
 import * as yup from 'yup';
+// Create separate validation schemas
+export const studentLoginValidation = yup.object().shape({
+  email: yup.string()
+    .email('Please enter a valid email')
+    .required('Email is required'),
+  password: yup.string().required('Password is required'),
+});
 
-export const signinFormValidation = yup.object().shape({
-  email: yup.string().email('invalid_email').required('req_email'),
-  password: yup.string().required('req_password'),
+export const nonStudentLoginValidation = yup.object().shape({
+  email: yup.string()
+    .matches(
+      /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/,
+      'CNIC must be in the format XXXXX-XXXXXXX-X'
+    )
+    .required('CNIC is required'),
+  password: yup.string().required('Password is required'),
 });
 export const forgotemailFormValidation = yup.object().shape({
   email: yup.string().email('invalid_email').required('req_email'),

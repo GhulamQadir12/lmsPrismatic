@@ -1,275 +1,193 @@
 import {mvs} from 'config/metrices';
 import React from 'react';
-import {Alert, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import Regular from 'typography/regular-text';
 import styles from './styles';
-import {ClockIcon, Tick} from 'assets/icons';
 import {Row} from 'components/atoms/row';
 import {colors} from 'config/colors';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Bold from 'typography/bold-text';
 import Medium from 'typography/medium-text';
-import moment from 'moment';
-import {Checkbox} from 'components/atoms/checkbox';
-import {PrimaryButton} from 'components/atoms/buttons';
-import RNFetchBlob from 'rn-fetch-blob';
-import {Image} from 'react-native';
-import * as IMG from 'assets/images';
+import {downloadFile, getFileExtension, renderFileIcon} from 'utils';
+import {URLS} from 'services/api/api-urls';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-
-
-const LectureNotesCard = ({item}) => {
-  console.log('first item', item);
-
+const LectureNotesCard = ({item, questionNumber, isExpanded, onToggle}) => {
+  const [downloadLoading, setDownloadLoading] = React.useState(false);
   const handleDownload = async () => {
-    const {fs, config} = RNFetchBlob;
-    const {DownloadDir} = fs.dirs;
-
-    const fileUrl = `https://ace.prismaticcrm.com/upload/LecturesDocs/${item?.file_upload}`;
-    const fileName = item?.file_upload || 'lecture_notes.pdf'; // Default file name if not provided
-    const destPath = `${DownloadDir}/${fileName}`;
-
-    try {
-      // Check if file already exists
-      const exists = await fs.exists(destPath);
-
-      if (exists) {
-        // Ask user to re-download
-        Alert.alert(
-          'File Already Downloaded',
-          'This file already exists. Do you want to re-download it?',
-          [
-            {
-              text: 'Cancel',
-              style: 'cancel',
-            },
-            {
-              text: 'Re-Download',
-              onPress: () => downloadFile(fileUrl, destPath),
-            },
-          ],
-        );
-      } else {
-        // File doesn't exist, proceed to download
-        downloadFile(fileUrl, destPath);
-      }
-    } catch (err) {
-      console.error('Error checking file existence:', err);
-    }
-  };
-
-  const downloadFile = (url, path) => {
-    const {config} = RNFetchBlob;
-
-    config({
-      fileCache: true,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        path,
-        description: 'Downloading file...',
-      },
-    })
-      .fetch('GET', url)
-      .then(res => {
-        console.log('File downloaded to:', res.path());
-        Alert.alert('Download complete!');
-      })
-      .catch(error => {
-        console.error('Download failed:', error);
-        Alert.alert('Download failed!');
-      });
-  };
-
-  //   const handleDownload = async () => {
-  //   const { config, fs } = RNFetchBlob;
-  //   const { DownloadDir } = fs.dirs; // Downloads directory (Android)
-
-  //   const fileUrl = `https://ace.prismaticcrm.com/upload/LecturesDocs/${item?.file_upload}`;
-  //   const fileName = item?.file_upload || 'lecture_notes.pdf'; // Default file name if not provided
-  //   const destPath = `${DownloadDir}/${fileName}`;
-
-  //   config({
-  //     fileCache: true,
-  //     addAndroidDownloads: {
-  //       useDownloadManager: true,
-  //       notification: true,
-  //       path: destPath,
-  //       description: 'Downloading file...',
-  //     },
-  //   })
-  //     .fetch('GET', fileUrl)
-  //     .then((res) => {
-  //       console.log('File downloaded to:', res.path());
-  //       alert('Download complete!');
-  //     })
-  //     .catch((error) => {
-  //       console.error('Download failed:', error);
-  //       alert('Download failed!');
-  //     });
-  // };
-
-const fileExtension = item.file_upload?.split('.').pop().toLowerCase();
-
-const renderFileIcon = () => {
-  if (fileExtension === 'pdf') {
-    return (
-      <FontAwesome
-        name="file-pdf-o"
-        size={mvs(20)}
-        color={colors.red}
-      />
-    );
-  } else if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(fileExtension)) {
-    return (
-      <FontAwesome
-        name="file-word-o" // You can choose different icons if needed: file-powerpoint-o, file-excel-o
-        size={mvs(20)}
-        color={colors.red} // or a color like '#2B579A'
-      />
-    );
-  } else {
-    return null; // Or a default icon if needed
-  }
+  const fileUrl = `${URLS.docs.download_lectures}${item?.file_upload}`;
+  const fileName = item?.file_upload || 'lecture_notes.pdf';
+  downloadFile(fileUrl, fileName, {
+    notificationTitle: 'Downloading lecture notes',
+    onSuccess: path => setDownloadLoading(false),
+      onBeforeDownload: () => setDownloadLoading(true),
+    onError: error => {
+      // don’t use console.error
+      setDownloadLoading(false);
+      Alert.alert(
+        'Download failed',
+        error?.message || 'Something went wrong while downloading.'
+      );
+    },
+  });
 };
 
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    // Assuming date is in DD-MMM-YYYY format
+    return dateString;
+  };
+
   return (
-    <View style={styles.infoContainer}>
-      <Row>
-        <View style={{flex: 1}}>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Id :'}
-              />
-            </View>
-            <View style={{flex: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.id || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Lecture :'}
-              />
-            </View>
-            <View style={{flex: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.lec_title || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Faculty :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.faculty_name || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Subject :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.subject_name || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          {/* <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  numberOfLines={3}
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={'Batch :'}
-                />
-              </View>
-              <View style={{flexGrow: 1,maxWidth:'60%'}}>
-                <Medium
-                  fontSize={mvs(14)}
-                  color={colors.primary}
-                  label={'Batch: 33'}
-                  numberOfLines={3}
-                />
-              </View>
-            </Row> */}
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Date :'}
-              />
-            </View>
-            <View style={{flexGrow: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.lec_date || ''}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Uploaded file :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Row style={{justifyContent: 'flex-start',gap:mvs(10),alignItems:'center'}}>
-                <TouchableOpacity onPress={handleDownload}>
-                  <Medium
-                    fontSize={mvs(16)}
-                    color={colors.red}
-                    label={item?.file_upload || ''}
-                    style={{textDecorationLine: 'underline'}}
-                    numberOfLines={3}
-                  />
-                </TouchableOpacity>
-                {renderFileIcon()}
-          
-              </Row>
-            </View>
-          </Row>
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={onToggle}
+      style={styles.container}
+    >
+      <View style={styles.cardHeader}>
+        <View style={[styles.lectureNumber,
+    {backgroundColor: colors.primary}
+        ]}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.white}
+            label={`${questionNumber}`}
+          />
         </View>
-      </Row>
-    </View>
+        
+        <View style={styles.headerContent}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.primary}
+            label={item?.lec_title || 'Untitled Lecture'}
+            numberOfLines={1}
+            style={styles.lectureTitle}
+          />
+          <Medium
+            fontSize={mvs(12)}
+            color={colors.lightGray}
+            label={formatDate(item?.lec_date)}
+          />
+        </View>
+        
+        <Icon 
+          name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
+          size={mvs(24)} 
+          color={colors.primary} 
+        />
+      </View>
+
+      {isExpanded && (
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="description" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Lecture:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.lec_title || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="school" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Faculty:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.faculty_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="menu-book" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Subject:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.subject_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="event" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Date:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={formatDate(item?.lec_date)}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="attachment" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'File:'}
+                style={styles.labelText}
+              />
+            </View>
+            <TouchableOpacity
+            disabled={!item?.file_upload || downloadLoading}
+              onPress={handleDownload}
+              style={styles.fileContainer}>
+              {renderFileIcon(
+                getFileExtension(item?.file_upload || ''),
+                mvs(20),
+                colors.primary,
+              )}
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                 label={
+                  downloadLoading
+                    ? 'Downloading...'
+                    : item?.file_upload || 'No file available'
+                }
+                numberOfLines={2}
+                style={styles.fileText}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 

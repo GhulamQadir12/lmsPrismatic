@@ -97,30 +97,23 @@ const isFocused = useIsFocused();
 
   const renderItem = ({item}) => <UnPaidInvoicesCard item={item} />;
 
-  const intrestedList = [
-    {id: 1, name: 'Social Marketing'},
-    // {id: 2, name: 'SEO '},
-    // {id: 3, name: 'Programming'},
-  ];
+
 
   return (
     <View style={styles.container}>
       <Header1x2x back={true} title={'Unpaid Invoices'} />
-        <Row
+       <View
         style={{
-          justifyContent: 'center',
           marginHorizontal: mvs(20),
           marginVertical: mvs(10),
-          gap: mvs(20),
+          alignSelf: 'center',
         }}>
         <Bold
-          label={t('Total Paid Invoices :')}
-          color={colors.red}
+          label={`${total} Total Unpaid Invoices`}
+          color={colors.primary}
           fontSize={mvs(20)}
         />
-
-        <Bold label={total || 0} fontSize={mvs(20)} color={colors.red} />
-      </Row>
+      </View>
      {loading ? (
           <Loader />
         ) : (

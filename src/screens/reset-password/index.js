@@ -27,6 +27,10 @@ import {updatePasswordValidation} from 'validations';
 import styles from './styles';
 import {forgotbackgroundimg} from 'assets/images';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import LinearGradient from 'react-native-linear-gradient';
+import * as IMG from 'assets/images';
+import {hexToRgba} from 'utils';
 import { StatusBar } from 'react-native';
 
 const ResetPasswordScreen = props => {
@@ -68,7 +72,7 @@ const handleFormSubmit = async (values) => {
           console.log("payload in reset", payload)
           const res = await resetPassword(payload);
           if (res?.status == true) {
-              navigate('Login')
+              navigate('GetStarted')
           }
           } catch (error) {
             Alert.alert('Error', 'An error occurred while verifying OTP');
@@ -83,14 +87,24 @@ const handleFormSubmit = async (values) => {
             backgroundColor={colors.primary}
             barStyle={'white'}
           />
-     <View style={[styles.lottiecontainer,{    backgroundColor: colors.primary}]}>
-        <LottieView
-          source={require('../../assets/lotties/lottie2.json')}
-          autoPlay
-          loop
-          style={styles.lottie}
-        />
-      </View>
+     <ImageBackground
+             source={IMG.eduBg} // Add a beautiful education background image
+             style={styles.backgroundImage}
+             resizeMode="cover">
+             <LinearGradient
+               colors={[
+                 hexToRgba(colors.primary, 0.8),
+                 hexToRgba(colors.primary, 0.85),
+               ]}
+               style={styles.gradientOverlay}>
+               <View style={[styles.lottiecontainer]}>
+                 <LottieView
+                   source={require('../../assets/lotties/lottie4.json')}
+                   autoPlay
+                   loop
+                   style={styles.lottie}
+                 />
+               </View>
 
     <View style={styles.bottomcontainer}>
       <KeyboardAvoidScrollview
@@ -113,6 +127,12 @@ const handleFormSubmit = async (values) => {
                 {console.log('errror2', errors)}
                 {!isPasswordChanged ? (
                   <>
+                   <Icon
+                                  name="school"
+                                  size={mvs(40)}
+                                  color={colors.primary}
+                                  style={{alignSelf: 'center'}}
+                                />
                     <Bold
                       label={'Set Password'}
                       color={colors.primary}
@@ -195,6 +215,8 @@ const handleFormSubmit = async (values) => {
 
      
     </View>
+    </LinearGradient>
+    </ImageBackground>
     </View>
   );
 };

@@ -3,23 +3,21 @@ import React, {useState} from 'react';
 import {TouchableOpacity, View} from 'react-native';
 import Regular from 'typography/regular-text';
 import styles from './styles';
-import {ClockIcon, Tick} from 'assets/icons';
 import {Row} from 'components/atoms/row';
 import {colors} from 'config/colors';
-import Feather from 'react-native-vector-icons/Feather';
-import Bold from 'typography/bold-text';
 import Medium from 'typography/medium-text';
 import moment from 'moment';
-import {Checkbox} from 'components/atoms/checkbox';
 import {PrimaryButton} from 'components/atoms/buttons';
 import QuizInstructionsModal from '../modals/quiz-modal';
 import {useNavigation} from '@react-navigation/native';
 import {useAppSelector} from 'hooks/use-store';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const QuizesCard = ({item}) => {
+const QuizesCard = ({item, questionNumber, role, isExpanded, onToggle}) => {
   const navigation = useNavigation();
   const [showInstructions, setShowInstructions] = useState(false);
   const configData = useAppSelector(s => s?.user?.configData);
+
   const instructions = {
     questionCount: item?.question_count || 0,
     attempts: 'You will have only one attempt for this quiz.',
@@ -33,10 +31,6 @@ const QuizesCard = ({item}) => {
   };
 
   const handleStartQuiz = () => {
-    // Logic to start the quiz after instructions are shown
-
-    // You can navigate to the quiz screen here
-    // navigate('QuizAttempt');
     navigation.navigate('QuizAttempt', {
       quizId: item?.id,
       isBounded: item?.time_allowed || null,
@@ -45,219 +39,231 @@ const QuizesCard = ({item}) => {
     setShowInstructions(false);
   };
 
-  return (
-    <View style={styles.infoContainer}>
-      <Row>
-        <View style={{flex: 1}}>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Id :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.id || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Faculty :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.teacher_name || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Subject :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.program_name || ''}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
+  const getQuizStatus = () => {
+    if (item?.is_published == "1") {
+      return { color: colors.green, text: 'Completed', icon: 'check-circle' };
+    } else if (item?.attempted) {
+      return { color: colors.bluecolor, text: 'Attempted', icon: 'history' };
+    } else if (moment(item?.lastDate, 'DD-MMM-YYYY').isBefore(moment(), 'day')) {
+      return { color: colors.red, text: 'Expired', icon: 'cancel' };
+    } else {
+      return { color: colors.yellow, text: 'Available', icon: 'access-time' };
+    }
+  };
 
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
+  const statusInfo = getQuizStatus();
+
+  return (
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={onToggle}
+      style={styles.container}
+    >
+      <View style={styles.cardHeader}>
+        <View style={[styles.quizNumber,{
+    backgroundColor: colors.primary,
+        }]}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.white}
+            label={`${questionNumber}`}
+          />
+        </View>
+        
+        <View style={styles.headerContent}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.primary}
+            label={item?.exam_title || 'Untitled Quiz'}
+            numberOfLines={1}
+            style={styles.quizTitle}
+          />
+          <Medium
+            fontSize={mvs(12)}
+            color={colors.cyan}
+            label={`${item?.question_count} questions • ${item?.total_marks} marks`}
+          />
+        </View>
+        
+        <View style={styles.headerRight}>
+          <View style={[styles.statusBadge, {backgroundColor: statusInfo.color}]}>
+            <Medium
+              fontSize={mvs(10)}
+              color={colors.white}
+              label={statusInfo?.text}
+              style={styles.statusText}
+            />
+          </View>
+          <Icon 
+            name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
+            size={mvs(24)} 
+            color={colors.primary} 
+          />
+        </View>
+      </View>
+
+      {isExpanded && (
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="person" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
+                fontSize={mvs(13)}
                 color={colors.placeholder}
-                label={'Quiz Title :'}
+                label={'Faculty:'}
+                style={styles.labelText}
               />
             </View>
-            <View style={{flexGrow: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.exam_title || ''}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.teacher_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="menu-book" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
+                fontSize={mvs(13)}
                 color={colors.placeholder}
-                label={`${
-                  configData?.related_type == '1' ? 'Batch' : 'Session'
-                }:`}
+                label={'Subject:'}
+                style={styles.labelText}
               />
             </View>
-            <View style={{flexGrow: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.batch_name || ''}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.program_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="class" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
+                fontSize={mvs(13)}
                 color={colors.placeholder}
-                label={'Total Questions:'}
+                label={`${configData?.related_type == '1' ? 'Batch' : 'Session'}:`}
+                style={styles.labelText}
               />
             </View>
-            <View style={{flexGrow: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.question_count || ''}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.batch_name || 'N/A'}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="quiz" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
+                fontSize={mvs(13)}
                 color={colors.placeholder}
-                label={'Total Marks :'}
+                label={'Questions:'}
+                style={styles.labelText}
               />
             </View>
-            <View style={{flexGrow: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.total_marks || ''}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.question_count || 'N/A'}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="star" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
+                fontSize={mvs(13)}
                 color={colors.placeholder}
-                label={'Obtained Marks :'}
+                label={'Total Marks:'}
+                style={styles.labelText}
+                numberOfLines={2}
               />
             </View>
-            <View style={{flexGrow: 1}}>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.total_marks || 'N/A'}
+              style={styles.valueText}
+            />
+          </View>
+
+          {item?.is_published == "1" && (
+            <View style={styles.detailRow}>
+              <View style={styles.labelContainer}>
+                <Icon name="grade" size={mvs(16)} color={colors.placeholder} />
+                <Regular
+                  fontSize={mvs(13)}
+                  color={colors.placeholder}
+                  label={'Obtained Marks:'}
+                  numberOfLines={2}
+                  style={styles.labelText}
+                />
+              </View>
               <Medium
                 fontSize={mvs(14)}
                 color={colors.primary}
                 label={item?.obtainedMarks || 0}
+                style={styles.valueText}
               />
             </View>
-          </Row>
+          )}
 
-          {/* <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  numberOfLines={3}
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={'Last Date :'}
-                />
-              </View>
-              <View style={{flexGrow: 1}}>
-                <Medium
-                  fontSize={mvs(14)}
-                  color={colors.primary}
-                  label={item?.lec_date || ''}
-                />
-              </View>
-            </Row> */}
-        </View>
-      </Row>
-      <Row>
-        <View></View>
-        {!item?.attempted &&
-        moment(item?.lastDate, 'DD-MMM-YYYY').isSameOrAfter(moment(), 'day') ? (
-          <TouchableOpacity
-            style={{
-              maxWidth: '30%',
-              borderRadius: mvs(5),
-              backgroundColor: colors.green,
-            }}
-            onPress={() => setShowInstructions(true)}>
-            <Row
-              style={{
-                justifyContent: 'flex-start',
-                gap: mvs(10),
-                alignItems: 'center',
-                padding: mvs(10),
-              }}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="event" size={mvs(16)} color={colors.placeholder} />
               <Regular
-                fontSize={mvs(16)}
-                color={colors.white}
-                label={'Start'}
-                style={{textAlign: 'center'}}
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Last Date:'}
+                style={styles.labelText}
+                numberOfLines={2}
               />
-              <Feather
-                name="arrow-up-right"
-                size={mvs(25)}
-                color={colors.white}
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.lastDate || 'N/A'}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.buttonContainer}>
+            {!item?.attempted &&
+            item?.exam_status == 'pending' &&
+            moment(item?.lastDate, 'DD-MMM-YYYY').isSameOrAfter(moment(), 'day') ? (
+              role === 'student' ? (
+                <PrimaryButton
+                  title="Start Quiz"
+                  onPress={() => setShowInstructions(true)}
+                  containerStyle={styles.startButton}
+                  textStyle={styles.buttonText}
+                />
+              ) : null
+            ) : item?.is_published == "1" ? (
+              <PrimaryButton
+                title="Review Quiz"
+                onPress={() =>
+                  navigation.navigate('QuizReview', {
+                    quizId: item?.id,
+                  })
+                }
+                containerStyle={styles.reviewButton}
+                textStyle={styles.buttonText}
               />
-            </Row>
-          </TouchableOpacity>
-        ) : (
-          <PrimaryButton
-            title="Review Quiz"
-            containerStyle={{
-              maxWidth: '35%',
-              borderRadius: mvs(5),
-              backgroundColor: colors.primary,
-            }}
-            onPress={() =>
-              navigation.navigate('QuizReview', {
-                quizId: item?.id,
-              })
-            }
-          />
-        )}
-      </Row>
+            ) : null}
+          </View>
+        </View>
+      )}
 
       <QuizInstructionsModal
         visible={showInstructions}
@@ -265,7 +271,7 @@ const QuizesCard = ({item}) => {
         onStartQuiz={handleStartQuiz}
         instructions={instructions}
       />
-    </View>
+    </TouchableOpacity>
   );
 };
 

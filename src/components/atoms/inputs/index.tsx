@@ -210,7 +210,7 @@ export const PrimaryInput = (props: props) => {
   return (
     <View style={[mainContainer]}>
       {label && (
-        <Regular label={label} style={[styles.labelStyle, labelStyle]}>
+        <Regular label={label} color={colors.primary} style={[styles.labelStyle, labelStyle]}>
           {isRequired ? <Regular color={colors.red} label={' *'} /> : null}
         </Regular>
       )}
@@ -346,7 +346,7 @@ export const MessageInput = (props: props) => {
           {/* <TouchableOpacity style={styles.uploadDocuments} onPress={onPress}>
             <AntDesign name="plus" size={24} color={colors.white} />
           </TouchableOpacity> */}
-        <Row style={{flex: 1}}>
+        <Row style={{flex: 1,maxWidth: '85%'}}>
           <TextInput
             onBlur={onBlur}
             keyboardType={keyboardType}
@@ -358,8 +358,10 @@ export const MessageInput = (props: props) => {
             multiline={true} // Add this
           />
         </Row>
-        <TouchableOpacity style={styles.sendIcon} onPress={sendMessage}>
-          <Feather name={'send'} size={25} color={colors.white} />
+        <TouchableOpacity style={[styles.sendIcon,{
+      backgroundColor: colors.primary
+        }]} onPress={sendMessage}>
+          <Feather name={'send'} size={18} color={colors.white} />
         </TouchableOpacity>
       </Row>
     </>
@@ -1290,7 +1292,6 @@ const styles = StyleSheet.create({
   },
   labelStyle: {
     alignSelf: 'flex-start',
-    color: colors.primary,
     marginBottom: mvs(3),
     paddingHorizontal: mvs(5),
   },
@@ -1358,13 +1359,15 @@ textInput: {
   marginLeft: mvs(10),
 },
 sendIcon: {
-      width: mvs(50),
-      height: mvs(52),
-      backgroundColor: colors.primary,
+      width: mvs(39),
+      height: mvs(39),
       borderRadius: mvs(10),
       marginLeft: mvs(10),
       alignItems: 'center',
       justifyContent: 'center',
+      position:'absolute',
+      right: mvs(0),
+      bottom: mvs(0),
     },
       uploadDocuments:{
        width: mvs(50),

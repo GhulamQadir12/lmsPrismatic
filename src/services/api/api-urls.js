@@ -1,5 +1,6 @@
 export let IP = 'https://lms.prismaticcrm.com/api/';
 export let PDFIP = 'https://ace.prismaticcrm.com/';
+export let CHATIP = 'http://154.57.208.110:8550';
 // export const IP = 'https://getmovers.co.uk';
 // export const IP = 'https://getmovers.katashempstead.com';
 export const setBaseUrls = (lmsUrl, pdfUrl) => {
@@ -28,7 +29,8 @@ export const URLS = {
     financialYear: 'FinancialYear/',
     requestId: 'GetValues',
     reimbursementDetails: 'GetById/',
-    login: `${IP}login`,
+    login: `${IP}login`, 
+    logOut: `${IP}logout`, 
     sendOtp: `${IP}send-otp`,
     verifyOtp: `${IP}verify-otp`,
     resetPassword: `${IP}reset-password`,
@@ -79,24 +81,33 @@ export const URLS = {
     place_hour_order: 'placeOrder',
   },
   chat: {
-    get_chat_messages: 'chat/messages/',
+    get_chat_messages: `${IP}user-chats`,
     get_latest_message: 'chat/get-new-messages/',
     get_conservation: 'chat/conversations',
-    send_message: 'chat/insert-message',
+    send_chat: `${IP}chatbot-store`,
+    update_chat: `${IP}chatbot-update/`,
     create_conservation: 'chat/create-conversation',
+    send_message:`${CHATIP}/ask`
   },
   notification: {
     get_notification: `${IP}notifications`,
-    read_notification: 'notificationRead',
+    send_notification: `${IP}send-notifications`,
   },
   config: {
     config_data: `${IP}config-data`,
   },
   newsData: {
-    get_news: `${IP}news`,
+    get_news: `${IP}announcement`,
   },
   helpSupport: {
     post_helpSupport: `${IP}help-support`,
     get_helpSupport: `${IP}complaints`,
+  },
+  docs: {
+    download_lectures: `${PDFIP}upload/LecturesDocs/`,
+    download_assignment: `${PDFIP}upload/assignments/`,
+  },
+  videos: {
+    yt_videos: `${PDFIP}uploads/thumbnails/`,
   },
 };

@@ -1,5 +1,6 @@
+// after home and recent
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, View, ScrollView, TouchableOpacity, BackHandler, AppState } from 'react-native';
+import { Alert, View, ScrollView, TouchableOpacity, BackHandler, AppState,DeviceEventEmitter  } from 'react-native';
 import { CountdownCircleTimer } from 'react-native-countdown-circle-timer';
 import Bold from 'typography/bold-text';
 import Medium from 'typography/medium-text';
@@ -45,6 +46,10 @@ const QuizAttempt = ({ route }) => {
   // Submission control state
   const [isSubmitting, setIsSubmitting] = useState(false);
     const [alertVisible, setAlertVisible] = useState(false); // Add this state
+    const [isInBackground, setIsInBackground] = useState(false);
+      const [appInForeground, setAppInForeground] = useState(true);
+  const appStateRef = useRef(AppState.currentState);
+  const questionsRef = useRef([]);
 
 
   const formatQuestions = (apiQuestions) => {
@@ -69,62 +74,112 @@ const QuizAttempt = ({ route }) => {
     });
   };
 
-  const prepareSubmissionData = () => {
-    return {
-      answers: questions.map(question => ({
-        question_id: question.id,
-        std_answer: selectedOptions[question.id] 
-          ? question.options.find(opt => opt.id === selectedOptions[question.id])?.text 
-          : "No Answered"
-      }))
-    };
-  };
+const prepareSubmissionData = () => {
+  // Use questions from ref if state is empty
+  const questionsToUse = questions.length > 0 ? questions : questionsRef.current;
+  
+  if (!questionsToUse || questionsToUse.length === 0) {
+    console.error('No questions available for submission');
+    return { answers: [] };
+  }
 
-  const handleQuizSubmission = async (navigateAfter = true) => {
-    const submissionData = prepareSubmissionData();
-    try {
-      await submitQuiz(submissionData, quizId);
-      if (navigateAfter) {
-        navigate('Quiz');
-      }
-      return true;
-    } catch (error) {
-      Alert.alert('Submission Error', 'Failed to submit quiz. Please try again.');
-      return false;
+  const submissionAnswers = questionsToUse.map(question => {
+    const selectedOptionId = selectedOptions[question.id];
+    let answerText = "No Answered";
+    
+    if (selectedOptionId) {
+      const selectedOption = question.options.find(opt => opt.id === selectedOptionId);
+      answerText = selectedOption ? selectedOption.text : "No Answered";
     }
+
+    return {
+      question_id: question.id,
+      std_answer: answerText
+    };
+  });
+
+  return {
+    answers: submissionAnswers
   };
+};
 
-  const handleAutoSubmit = async (message, navigateAfter = true) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    setAlertVisible(true);
+// Enhanced handleAutoSubmit with additional checks
+const handleAutoSubmit = async (message, shouldNavigate = true) => {
+  if (isSubmitting) return;
+  setIsSubmitting(true);
+  setAlertVisible(true);
 
-    // Show alert with close button and auto-dismiss after 3 seconds
-    const alert = Alert.alert(
-      'Attention', 
-      message,
-      [
-        {
-          text: 'Submit Now',
-          onPress: async () => {
-            clearTimeout(alertTimeout);
-            await handleQuizSubmission(navigateAfter);
-            setAlertVisible(false);
+  // Double check we have questions data
+  if (questions.length === 0 && questionsRef.current.length === 0) {
+    Alert.alert('Error', 'No quiz data available for submission');
+    setIsSubmitting(false);
+    setAlertVisible(false);
+    return;
+  }
+
+  const submissionData = prepareSubmissionData();
+  console.log('Auto-submitting with data:', JSON.stringify(submissionData, null, 2));
+
+  if (submissionData.answers.length === 0) {
+    Alert.alert('Error', 'No answers available for submission');
+    setIsSubmitting(false);
+    setAlertVisible(false);
+    return;
+  }
+
+  const submissionSuccess = await handleQuizSubmission(shouldNavigate);
+  
+  Alert.alert(
+    'Attention', 
+    message,
+    submissionSuccess ? [
+      {
+        text: 'OK',
+        onPress: () => {
+          setAlertVisible(false);
+          if (shouldNavigate) {
+            navigate('Quiz');
           }
         }
-      ],
-      { cancelable: false }
-    );
-      // Auto-dismiss after 3 seconds
-    const alertTimeout = setTimeout(async () => {
-      await handleQuizSubmission(navigateAfter);
-      setAlertVisible(false);
-    }, 3000);
+      }
+    ] : [
+      {
+        text: 'Retry',
+        onPress: async () => {
+          await handleAutoSubmit(message, shouldNavigate);
+        }
+      },
+      {
+        text: 'Cancel',
+        onPress: () => {
+          setAlertVisible(false);
+          setIsSubmitting(false);
+        },
+        style: 'cancel'
+      }
+    ],
+    { cancelable: false }
+  );
+};
+const handleQuizSubmission = async (navigateAfter = true) => {
+  const submissionData = prepareSubmissionData();
+  
+  // Debug log to verify submission data
+  console.log('Submitting quiz with data:', JSON.stringify(submissionData, null, 2));
 
-    return () => {
-      clearTimeout(alertTimeout);
-    };
-  };
+  try {
+    await submitQuiz(submissionData, quizId);
+    if (navigateAfter) {
+      navigate('Quiz');
+    }
+    return true;
+  } catch (error) {
+    console.error('Error submitting quiz:', error);
+    console.log('Submission data that failed:', JSON.stringify(submissionData, null, 2));
+    Alert.alert('Submission Error', 'Failed to submit quiz. Please try again.');
+    return false;
+  }
+};
 
    const handleTimeUp = async () => {
     if (isSubmitting || alertVisible) return;
@@ -132,25 +187,36 @@ const QuizAttempt = ({ route }) => {
     Alert.alert('Time Up!', 'Your quiz has been automatically submitted.');
   };
 
-  const moveToNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-      setQuestionKey(prevKey => prevKey + 1);
-      setIsQuestionTimerPlaying(true);
-    }
-  };
+const moveToNextQuestion = () => {
+  if (currentQuestionIndex < questions.length - 1) {
+    setCurrentQuestionIndex((prev) => prev + 1);
+    setQuestionKey(prevKey => prevKey + 1);
+    // Only play timer if the next question is bounded
+    setIsQuestionTimerPlaying(isBounded === 'bound');
+  }
+};
 
-  const handleQuestionTimerComplete = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      moveToNextQuestion();
-      return { shouldRepeat: false };
-    } else {
-      if (!isSubmitting) {
-        handleAutoSubmit('Question time is up! Your quiz will be submitted automatically in 3 seconds.');
-      }
-      return { shouldRepeat: false };
+const handleQuestionTimerComplete = () => {
+  setIsQuestionTimerPlaying(false);
+  
+  // If this is the last question, submit the quiz
+  if (currentQuestionIndex >= questions.length - 1) {
+    if (!isSubmitting) {
+      handleAutoSubmit('Question time is up! Your quiz will be submitted automatically in 3 seconds.');
     }
-  };
+    return { shouldRepeat: false };
+  }
+  
+  // For other questions, move to next question automatically
+  moveToNextQuestion();
+  return { shouldRepeat: false };
+};
+
+    useEffect(() => {
+    if (!isFocused && !isSubmitting && !alertVisible) {
+      handleAutoSubmit('You left the quiz. Your answers are being submitted.', true);
+    }
+  }, [isFocused, isSubmitting, alertVisible]);
 
   const handleFinishConfirmation = () => {
     Alert.alert(
@@ -201,9 +267,11 @@ const QuizAttempt = ({ route }) => {
     return () => backHandler.remove();
   }, [selectedOptions, questions]);
 
-useEffect(() => {
-    const handleAppStateChange = (nextAppState) => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+ useEffect(() => {
+    const handleAppStateChange = async (nextAppState) => {
+      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App came back to foreground
+        setAppInForeground(true);
         const timeSpentInBackground = Math.floor((Date.now() - lastActiveTime) / 1000);
         if (timeRef.current > timeSpentInBackground) {
           timeRef.current -= timeSpentInBackground;
@@ -215,17 +283,45 @@ useEffect(() => {
         }
         updateTimerDisplay();
       } else if (nextAppState.match(/inactive|background/)) {
+        // App going to background
+        setAppInForeground(false);
         setLastActiveTime(Date.now());
         setIsQuestionTimerPlaying(false);
-      } else if (nextAppState === 'active') {
-        setIsQuestionTimerPlaying(true);
+        
+        // Submit immediately when going to background
+        if (!isSubmitting && !alertVisible) {
+          await handleAutoSubmit('You navigated away from the quiz. Your answers are being submitted.', true);
+        }
       }
+      appStateRef.current = nextAppState;
       setAppState(nextAppState);
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
+    
+    // For Android, add additional listeners
+    if (Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        // Already handled in your existing backHandler
+        return false;
+      });
+
+      // Additional Android-specific listeners
+      DeviceEventEmitter.addListener('activityPaused', () => {
+        if (isFocused && !isSubmitting && !alertVisible) {
+          handleAutoSubmit('You left the quiz. Your answers are being submitted.', true);
+        }
+      });
+
+      return () => {
+        subscription.remove();
+        backHandler.remove();
+        DeviceEventEmitter.removeAllListeners('activityPaused');
+      };
+    }
+
     return () => subscription.remove();
-  }, [appState, lastActiveTime, isSubmitting, alertVisible]);
+  }, [isSubmitting, alertVisible, isFocused]);
 
   const updateTimerDisplay = () => {
     const mins = Math.floor(timeRef.current / 60);
@@ -234,25 +330,28 @@ useEffect(() => {
     setDisplaySeconds(secs);
   };
 
-  const fetchQuizQuestionsList = async () => {
-    try {
-      setLoading(true);
-      const response = await getQuizQuestions(parseInt(quizId));
-      const quizData = response?.data || {};
-      
-      setQuestions(formatQuestions(quizData.questions));
-      setTimeAllowed(quizData?.time_allowed || 60);
-      setTotalQuestions(quizData.total_questions);
-      
-      timeRef.current = quizData?.time_allowed || 60;
-      updateTimerDisplay();
-      
-    } catch (err) {
-      console.error('Failed to fetch data', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchQuizQuestionsList = async () => {
+  try {
+    setLoading(true);
+    const response = await getQuizQuestions(parseInt(quizId));
+    const quizData = response?.data || {};
+    
+    const formattedQuestions = formatQuestions(quizData.questions);
+    setQuestions(formattedQuestions);
+    questionsRef.current = formattedQuestions; // Store in ref
+    
+    setTimeAllowed(quizData?.time_allowed || 60);
+    setTotalQuestions(quizData.total_questions);
+    
+    timeRef.current = quizData?.time_allowed || 60;
+    updateTimerDisplay();
+    
+  } catch (err) {
+    console.error('Failed to fetch data', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (isFocused) {
@@ -289,18 +388,29 @@ useEffect(() => {
     }));
   };
 
-  const handleNext = () => {
-    if (isBounded !== 'bound' && !selectedOptions[currentQuestion.id]) {
+ const handleNext = () => {
+  // Check if user hasn't selected an answer
+  if (!selectedOptions[currentQuestion.id]) {
+    // Case 1: Question has bound time and it's still running
+    if (isBounded === 'bound' && isQuestionTimerPlaying) {
       Alert.alert('Please select an option', 'You must select an answer before proceeding.');
       return;
     }
-    
-    if (currentQuestionIndex < questions.length - 1) {
-      moveToNextQuestion();
-    } else {
-      handleFinishConfirmation();
+    // Case 2: Question doesn't have bound time (always show alert)
+    else if (isBounded !== 'bound') {
+      Alert.alert('Please select an option', 'You must select an answer before proceeding.');
+      return;
     }
-  };
+    // Case 3: Bound time has ended (no alert, just proceed)
+  }
+
+  // If we get here, either user selected an answer or bound time ended without selection
+  if (currentQuestionIndex < questions.length - 1) {
+    moveToNextQuestion();
+  } else {
+    handleFinishConfirmation();
+  }
+};
 
   useEffect(() => {
     console.log('Disabling screenshots...');
@@ -326,10 +436,10 @@ useEffect(() => {
               title={'Minutes'}
               titleColor={'#333'}
               titleStyle={{ fontWeight: 'normal' }}
-              activeStrokeColor="#3498db"
+              activeStrokeColor={colors.primary}
               inActiveStrokeColor="#ecf0f1"
               inActiveStrokeOpacity={0.5}
-              progressValueColor="#2980b9"
+              progressValueColor={colors.primary}
             />
 
             <CircularProgress

@@ -6,8 +6,8 @@ import {mvs} from 'config/metrices';
 import {t} from 'i18next';
 import React from 'react';
 import {ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
-import Icon from 'react-native-vector-icons/AntDesign';
 import Medium from 'typography/medium-text';
+import Entypo from 'react-native-vector-icons/Entypo';
 
 const QuizInstructionsModal = ({
   loading,
@@ -21,7 +21,7 @@ const QuizInstructionsModal = ({
     timing: '',
     answers: '',
     pageReload: '',
-  }
+  },
 }) => {
   return (
     <ModalWrapper
@@ -30,58 +30,51 @@ const QuizInstructionsModal = ({
       visible={visible}
       style={[styles.contentContainerStyle, style]}>
       <View style={styles.container}>
-      <ScrollView contentContainerStyle={{flexGrow: 1}} showsVerticalScrollIndicator={false}>
-        <View style={styles.header} />
-        <TouchableOpacity onPress={onClose} style={styles.cross}>
-          <CrossModal />
-        </TouchableOpacity>
-        
-        <Medium
-          label={t('Quiz instructions')}
-          style={[styles.heading,{color: colors.primary}]}
-        />
-        
-        <View style={styles.instructionsContainer}>
-          <InstructionItem 
-            title={t('Questions')}
-            description={`This quiz consists of ${instructions.questionCount} questions.`}
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1}}
+          showsVerticalScrollIndicator={false}>
+          {/* <View style={styles.header} /> */}
+           <TouchableOpacity onPress={onClose} style={styles.cross}>
+                       {/* <CrossModal /> */}
+                       <Entypo name="circle-with-cross" size={25} color={colors.red} />
+                     </TouchableOpacity>
+          <Medium
+            label={t('Quiz instructions')}
+            style={[styles.heading, {color: colors.primary}]}
           />
-          
-          <InstructionItem 
-            title={t('Attempts')}
-            description={instructions.attempts}
-          />
-          
-          <InstructionItem 
-            title={t('Timing')}
-            description={instructions.timing}
-          />
-          
-          <InstructionItem 
-            title={t('Answers')}
-            description={instructions.answers}
-          />
-          
-          <InstructionItem 
-            title={t('Page Reload Restrictions')}
-            description={instructions.pageReload}
-          />
-        </View>
-
-        <TouchableOpacity
-          disabled={loading}
-          onPress={onStartQuiz}
-          style={[styles.startButton, {backgroundColor: colors.primary}]}>
-          {loading ? (
-            <Loader />
-          ) : (
-            <Medium
-              label={t('Take The Quiz')}
-              style={styles.buttonText}
+          <View style={styles.instructionsContainer}>
+            <InstructionItem
+              title={t('Questions')}
+              description={`This quiz consists of ${instructions?.questionCount} questions.`}
             />
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+            <InstructionItem
+              title={t('Attempts')}
+              description={instructions?.attempts}
+            />
+            <InstructionItem
+              title={t('Timing')}
+              description={instructions?.timing}
+            />
+            <InstructionItem
+              title={t('Answers')}
+              description={instructions?.answers}
+            />
+            <InstructionItem
+              title={t('Page Reload Restrictions')}
+              description={instructions?.pageReload}
+            />
+          </View>
+          <TouchableOpacity
+            disabled={loading}
+            onPress={onStartQuiz}
+            style={[styles.startButton, {backgroundColor: colors.primary}]}>
+            {loading ? (
+              <Loader />
+            ) : (
+              <Medium label={t('Take The Quiz')} style={styles.buttonText} />
+            )}
+          </TouchableOpacity>
+        </ScrollView>
       </View>
     </ModalWrapper>
   );
@@ -89,16 +82,15 @@ const QuizInstructionsModal = ({
 
 const InstructionItem = ({title, description}) => (
   <View style={styles.instructionItem}>
-    <Medium 
-      label={`${title}:`} 
-      style={[styles.instructionTitle, {color: colors.primary}]} 
+    <Medium
+      label={`${title}:` || 'N/A'}
+      style={[styles.instructionTitle, {color: colors.primary}]}
       numberOfLines={4}
     />
-    <Medium 
-      label={description} 
-      style={styles.instructionDescription} 
-            numberOfLines={34}
-
+    <Medium
+      label={description || 'N/A'}
+      style={styles.instructionDescription}
+      numberOfLines={64}
     />
   </View>
 );
@@ -116,10 +108,9 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: colors.white,
-    // paddingVertical: mvs(25),
     paddingHorizontal: mvs(20),
     borderRadius: mvs(20),
-    maxHeight:'85%',
+    maxHeight: '85%',
   },
   header: {
     height: mvs(3),
@@ -132,6 +123,8 @@ const styles = StyleSheet.create({
   cross: {
     padding: mvs(5),
     alignSelf: 'flex-end',
+    marginTop:mvs(20)
+
   },
   heading: {
     fontSize: mvs(20),

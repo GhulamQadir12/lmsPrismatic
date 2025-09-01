@@ -114,9 +114,9 @@ const Notifications = props => {
       <Row style={{justifyContent: 'flex-start'}}>
         <View style={styles.titleandtextview}>
           <Row>
-            <Bold color={colors.primary} label={item.notification_type} />
+            <Bold color={colors.primary} label={item?.notification_type} />
           </Row>
-          <Regular color={colors.black} label={item.message} numberOfLines={100} />
+          <Regular color={colors.black} label={item?.message} numberOfLines={100} />
         </View>
       </Row>
       {/* <Regular

@@ -14,7 +14,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {getDashbaord, getNews} from 'services/api/auth-api-actions';
+import {
+  getDashbaord,
+  getNews,
+  onLogoutPress,
+} from 'services/api/auth-api-actions';
 import {UTILS} from 'utils';
 import styles from './styles';
 import Medium from 'typography/medium-text';
@@ -38,11 +42,16 @@ import CourseShiftButtonsCard from 'components/molecules/course-shift-button-car
 import {FlatList} from 'react-native';
 import MyCarousel from 'components/molecules/carousal/mycarousal';
 import {Dropdown} from 'react-native-element-dropdown';
+import QuizInstructionsModal from 'components/molecules/modals/quiz-modal';
+import AnnouncementDescriptionModal from 'components/molecules/modals/announcement-modal';
+import {useDispatch} from 'react-redux';
 
 const HomeTab = props => {
   const user = useAppSelector(s => s?.user?.userInfo);
   const configData = useAppSelector(s => s?.user?.configData);
-  console.log("configData2 in home tab", configData);
+  const role = useAppSelector(s => s?.user?.role);
+  console.log('user role in home tab', role);
+  console.log('configData2 in home tab', configData);
   console.log('user in home tab', user);
   const [select, setSelect] = useState('checkin');
   const [timeToggle, setTimeToggle] = useState(true);
@@ -51,7 +60,19 @@ const HomeTab = props => {
   const [isFocus, setIsFocus] = useState(false);
   const [news, setNews] = useState([]);
   const [gettingNews, setGettingNews] = useState([]);
-    //  const [configData, setConfigData] = useState(null);
+  const dispatch = useDispatch();
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const instructions = {
+    questionCount: 0,
+    attempts: 'You will have only one attempt for this quiz.',
+    timing: `You will need to complete your attempt in one sitting, as you are allotted ${'N/A'} minutes to complete it.`,
+    answers:
+      'You cannot review your answer-choices.To start, click the "Take the Quiz" button. When finished, click the "Finish" button. Only registered, enrolled users can take quizzes.',
+    pageReload:
+      'You are not allowed to reload the page while you are attempting a specific quiz. If you will go to refresh the page you will not be allowed to attempt it again as you have only one attempt.',
+  };
+  //  const [configData, setConfigData] = useState(null);
 
   // useEffect(() => {
   //   const fetchConfigData = async () => {
@@ -93,6 +114,7 @@ const HomeTab = props => {
   ];
   const [order, setOrder] = React.useState([]);
   const getNewses = async () => {
+    console.log('coming');
     try {
       setGettingNews(true);
       const res = await getNews();
@@ -185,9 +207,33 @@ const HomeTab = props => {
     {label: 'Biology', value: 'bio'},
     {label: 'Computer Science', value: 'cs'},
   ];
+
+  const logout = async () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await dispatch(onLogoutPress()); // <-- dispatch instead of direct call
+              props.navigation.navigate('GetStarted');
+            } catch (err) {
+              console.error('Logout error', err);
+              Alert.alert('Error', 'Something went wrong. Please try again.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
   return (
     <View style={styles.container}>
-<StatusBar
+      <StatusBar
         translucent={false}
         backgroundColor={colors.primary}
         barStyle={'white'}
@@ -200,12 +246,16 @@ const HomeTab = props => {
             marginHorizontal: mvs(10),
             marginVertical: mvs(15),
           }}>
-          <Bold label={`${configData?.business_name}  LMS`} style={styles.title} numberOfLines={2} />
-          <TouchableOpacity onPress={() => navigate('Notifications')}>
+          <Bold
+            label={`${configData?.business_name ?? 'N/A'} LMS`}
+            style={styles.title}
+            numberOfLines={1}
+          />
+          <TouchableOpacity onPress={logout}>
             <Image
               style={{
-                width: mvs(25),
-                height: mvs(25),
+                width: mvs(30),
+                height: mvs(30),
                 borderRadius: mvs(35),
               }}
               source={IMG.notification}
@@ -216,72 +266,72 @@ const HomeTab = props => {
       <ScrollView
         contentContainerStyle={{flexGrow: 1}}
         showsVerticalScrollIndicator={false}>
-        <ImageBackground
+        <Image
           source={IMG.homebackgroundimg}
           resizeMode="stretch"
-          style={styles.backgroundimg}>
-          {/* <AppHeader
-          title={'Prismatic LMS'}
-          style={{backgroundColor: colors.primary,marginTop:mvs(-15)}}
-        /> */}
-        </ImageBackground>
+          style={[styles.backgroundimg, {tintColor: colors.primary}]}
+        />
 
         <View style={{marginTop: mvs(-130), padding: mvs(20)}}>
           <View style={styles.infoContainer}>
             <Row>
               <View style={{flex: 1}}>
                 <Bold
-                  label={`Welcome Back to ${configData?.related_type ==  '1' ? 'Training' : 'College'}`}
+                  label={`Welcome Back to ${
+                    configData?.related_type == '1' ? 'Training' : 'College'
+                  }`}
                   numberOfLines={2}
                   color={colors.primary}
                   fontSize={mvs(16)}
                   style={{maxWidth: '85%'}}
                 />
                 <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-                  <View style={{width: '35%'}}>
+                  <View style={{width: '30%'}}>
                     <Regular color={colors.placeholder} label={'Name:'} />
                   </View>
                   <View style={{flex: 1}}>
                     <Medium
                       fontSize={mvs(14)}
                       color={colors.primary}
-                      label={user?.name || ''}
+                      label={user?.name || 'N/A'}
                       numberOfLines={2}
                     />
                   </View>
                 </Row>
                 <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-                  <View style={{width: '35%'}}>
+                  <View style={{width: '30%'}}>
                     <Regular color={colors.placeholder} label={'Mobile:'} />
                   </View>
                   <View style={{flexGrow: 1}}>
                     <Medium
                       fontSize={mvs(14)}
                       color={colors.primary}
-                      label={user?.mobile || ''}
+                      label={user?.mobile || 'N/A'}
                       numberOfLines={3}
                     />
                   </View>
                 </Row>
                 <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-                  <View style={{width: '35%'}}>
+                  <View style={{width: '30%'}}>
                     <Regular
                       numberOfLines={3}
                       fontSize={mvs(12)}
                       color={colors.placeholder}
-                      label={`${configData?.related_type ==  '1' ? 'Batch' : 'Session'}:`}
+                      label={`${
+                        configData?.related_type == '1' ? 'Batch' : 'Session'
+                      }:`}
                     />
                   </View>
                   <View style={{flexGrow: 1}}>
                     <Medium
                       fontSize={mvs(14)}
                       color={colors.primary}
-                      label={user?.batch || ''}
+                      label={user?.batch || 'N/A'}
                     />
                   </View>
                 </Row>
                 <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-                  <View style={{width: '35%'}}>
+                  <View style={{width: '30%'}}>
                     <Regular
                       numberOfLines={3}
                       fontSize={mvs(12)}
@@ -293,29 +343,23 @@ const HomeTab = props => {
                     <Medium
                       fontSize={mvs(14)}
                       color={colors.primary}
-                      label={user?.branch || ''}
+                      label={user?.branch || 'N/A'}
                     />
                   </View>
                 </Row>
               </View>
               <Image
                 source={
-                  user?.profile_img
-                    ? {uri: user?.profile_img}
-                    : IMG.lmsavatar
+                  user?.profile_img ? {uri: user?.profile_img} : IMG.lmsavatar
                 }
-                 style={{
-                  width: mvs(70),
-                  height: mvs(70),
+                style={{
+                  width: mvs(60),
+                  height: mvs(60),
                   borderRadius: mvs(35),
-                  marginRight: mvs(-15),
-                  marginTop: mvs(-15),
                 }}
                 resizeMode="contain"
               />
-              {
-                console.log('user profile image', user?.profile_img)
-              }
+              {console.log('user profile image', user?.profile_img)}
             </Row>
           </View>
         </View>
@@ -328,9 +372,16 @@ const HomeTab = props => {
             justifyContent: 'center',
             alignItems: 'center',
             marginBottom: mvs(6),
+            marginHorizontal: mvs(20),
             // height: mvs(150),
           }}>
-          <MyCarousel data={news} gettingNews={gettingNews} />
+          <MyCarousel
+            data={news}
+            gettingNews={gettingNews}
+            onPress={item => {
+              setSelectedAnnouncement(item), setShowInstructions(true);
+            }}
+          />
         </View>
 
         {/* <View style={styles.dropdowncontainer}>
@@ -416,7 +467,16 @@ const HomeTab = props => {
             marginBottom: mvs(120),
             marginHorizontal: mvs(20),
           }}>
-          {HomeList.map((item, index) => {
+          {HomeList.filter(item => {
+            // If the item is 'Attendance' and related_type is 1, exclude it
+            {/* if (
+              item.title === 'Attendance' &&
+              configData?.related_type == '1'
+            ) {
+              return false;
+            } */}
+            return true;
+          }).map((item, index) => {
             const isRegisterCourse = item.title === 'Register Course';
 
             return (
@@ -424,17 +484,16 @@ const HomeTab = props => {
                 key={index}
                 onPress={() => {
                   if (!isDisabled || isRegisterCourse) {
-                    // console.log('move to :', item?.moveTo);
                     navigate(item?.moveTo);
                   }
                 }}
                 backgroundColor={
                   isDisabled
                     ? isRegisterCourse
-                      ? colors.homecard1 // Register Course keeps its original color
-                      : '#EBEBE4' // Other buttons are disabled
+                      ? colors.homecard1
+                      : '#EBEBE4'
                     : isRegisterCourse
-                    ? colors.homecard1 // Register Course is disabled when isDisabled is false
+                    ? colors.homecard1
                     : index % 4 === 0 || index % 4 === 3
                     ? colors.homecard2
                     : colors.homecard1
@@ -446,6 +505,12 @@ const HomeTab = props => {
           })}
         </View>
       </ScrollView>
+      <AnnouncementDescriptionModal
+        visible={showInstructions}
+        onClose={() => setShowInstructions(false)}
+        // onStartQuiz={handleStartQuiz}
+        instructions={selectedAnnouncement}
+      />
     </View>
   );
 };

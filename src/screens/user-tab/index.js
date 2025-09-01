@@ -1,54 +1,27 @@
 import * as IMG from 'assets/images';
-import {PrimaryButton} from 'components/atoms/buttons';
-import PrimaryInput from 'components/atoms/inputs';
-import {KeyboardAvoidScrollview} from 'components/atoms/keyboard-avoid-scrollview';
-import showToast from 'components/atoms/show-toast';
 import {colors} from 'config/colors';
 import {mvs} from 'config/metrices';
-import {Formik} from 'formik';
-import {useAppDispatch, useAppSelector} from 'hooks/use-store';
+import {useAppSelector} from 'hooks/use-store';
 import React from 'react';
-import {ImageBackground, StatusBar, TouchableOpacity, View} from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import {updateProfile, uploadImage} from 'services/api/auth-api-actions';
-import i18n from 'translation';
+import {StatusBar, View} from 'react-native';
 import Medium from 'typography/medium-text';
-import {UTILS} from 'utils';
-import {updateProfileFormValidation} from 'validations';
 import styles from './styles';
 import Header1x2x from 'components/atoms/headers/header-1x-2x';
 import {Row} from 'components/atoms/row';
-import Bold from 'typography/bold-text';
 import Regular from 'typography/regular-text';
 import {Image} from 'react-native';
 
 const UserTab = props => {
-  const [loading, setLoading] = React.useState(false);
-  const [profileBtnLoading, setProfileBtnLoading] = React.useState(false);
   const user = useAppSelector(s => s?.user);
   const userInfo = user?.userInfo;
-  console.log('user ifno===>', userInfo);
-  const {countries} = user;
-  const dispatch = useAppDispatch();
-  const {t} = i18n;
-  const [firstname, setfirstname] = React.useState();
-  const [password, setpassword] = React.useState();
-  const [role, setRole] = React.useState(false);
-  const [company, setCompany] = React.useState(false);
-
-  const intrestedList = [
-    {id: 1, name: 'Social Marketing'},
-    {id: 2, name: 'SEO '},
-    {id: 3, name: 'Programming'},
-  ];
 
   return (
     <View style={styles.container}>
-     <StatusBar
-            translucent={false}
-            backgroundColor={colors.primary}
-            barStyle={'white'}
-          />
+      <StatusBar
+        translucent={false}
+        backgroundColor={colors.primary}
+        barStyle={'white'}
+      />
       <Header1x2x back={true} title={'Profile'} />
 
       <View
@@ -57,14 +30,32 @@ const UserTab = props => {
           marginBottom: mvs(20),
           height: mvs(150),
         }}>
-        <Image
-          source={userInfo?.profile_img ? {uri: userInfo?.profile_img} : IMG.lmsavatar}
-          style={styles.imgUpload}
-          resizeMode='contain' />
+        <View
+          style={{
+            width: mvs(125),
+            height: mvs(125),
+            alignSelf: 'center',
+            borderWidth: mvs(1),
+            borderColor: colors.border,
+            borderRadius: mvs(100),
+            marginTop: mvs(10),
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <Image
+            source={
+              userInfo?.profile_img
+                ? {uri: userInfo?.profile_img}
+                : IMG.lmsavatar
+            }
+            style={styles.imgUpload}
+            resizeMode="contain"
+          />
+        </View>
 
         <Medium
           color={colors.primary}
-          label={userInfo?.name || ''}
+          label={userInfo?.name || 'N/A'}
           style={styles.name}
           numberOfLines={3}
         />
@@ -85,7 +76,7 @@ const UserTab = props => {
                 <Medium
                   fontSize={mvs(14)}
                   color={colors.primary}
-                  label={userInfo?.email || ''}
+                  label={userInfo?.email || 'N/A'}
                   numberOfLines={3}
                 />
               </View>
@@ -180,26 +171,6 @@ const UserTab = props => {
                 />
               </View>
             </Row>
-            {/* <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  numberOfLines={3}
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={'Enrolled :'}
-                />
-              </View>
-              <View style={{flexGrow: 1}}>
-                {intrestedList.map(item => (
-                  <Medium
-                    key={item.id}
-                    fontSize={mvs(14)}
-                    color={colors.primary}
-                    label={'• ' + item.name}
-                  />
-                ))}
-              </View>
-            </Row> */}
             <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
               <View style={{width: '35%'}}>
                 <Regular

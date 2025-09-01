@@ -1,152 +1,176 @@
-import messaging from '@react-native-firebase/messaging';
 import {PrimaryButton} from 'components/atoms/buttons';
-import PrimaryInput, {
-  InputWithIconBranchTypeSelection,
-  InputWithIconProgramTypeSelection,
-  InputWithIconTypeSelection,
-  TextAreaInput,
-} from 'components/atoms/inputs';
+import PrimaryInput, {TextAreaInput} from 'components/atoms/inputs';
 import {KeyboardAvoidScrollview} from 'components/atoms/keyboard-avoid-scrollview/index';
-import {colors} from 'config/colors';
 import {mvs} from 'config/metrices';
 import {Formik} from 'formik';
-import {useAppDispatch, useAppSelector} from 'hooks/use-store';
-import {navigate} from 'navigation/navigation-ref';
-import React, {useEffect} from 'react';
-import {Alert, Image, TouchableOpacity, View} from 'react-native';
-import {requestNotifications} from 'react-native-permissions';
-import {getLeaveTypes, onLogin, postHelpSupport} from 'services/api/auth-api-actions';
-import i18n from 'translation';
-import Bold from 'typography/bold-text';
-import Medium from 'typography/medium-text';
-import {helpSupportFormValidation, signinFormValidation} from 'validations';
+import {useAppSelector} from 'hooks/use-store';
+import React from 'react';
+import {Alert, View} from 'react-native';
+import {postHelpSupport} from 'services/api/auth-api-actions';
+import {helpSupportFormValidation} from 'validations';
 import styles from './styles';
-import {checkimg, forgotbackgroundimg, loginbackgroundimg} from 'assets/images';
-import Regular from 'typography/regular-text';
-import {Row} from 'components/atoms/row';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Header1x2x from 'components/atoms/headers/header-1x-2x';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import moment from 'moment';
-import {pickDocument} from 'utils';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import Medium from 'typography/medium-text';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import {colors} from 'config/colors';
+
+
 const HelpDesk = props => {
-  const {t} = i18n;
-  const [rember, setRemember] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [selected, setSelected] = React.useState('annual');
-  const [leaveType, setleaveTypeList] = React.useState([]);
-const user = useAppSelector(s => s?.user?.userInfo);
-  console.log('user in help desk', user);
-
+  const user = useAppSelector(s => s?.user?.userInfo);
   const navigation = useNavigation();
-
-  // useEffect(() => {
-  //   fetchLeaveTypeList(); // Fetch data on component mount
-  // }, []);
-
-
   const initialValues = {
     user_id: user?.id || '',
     name: user?.name || '',
-    email:  user?.email || '',
+    email: user?.email || '',
     subject: '',
     message: '',
   };
-  
 
-const handleFormSubmit = async (values) => {
-  try {
-    setLoading(true);
-    const res = await postHelpSupport({
-      user_id: values.user_id,
-      name: values.name,
-      email: values.email,
-      subject: values.subject,
-      message: values.message,
-    });
-    
-    if (res) {
-      // Handle success - maybe show a success message and navigate
-      Alert.alert('Success', 'Your message has been sent successfully!');
-      navigation?.goBack();
+  const handleFormSubmit = async values => {
+    try {
+      setLoading(true);
+      const res = await postHelpSupport({
+        user_id: values?.user_id,
+        name: values?.name,
+        email: values?.email,
+        subject: values?.subject,
+        message: values?.message,
+      });
+
+      if (res?.status) {
+        Alert.alert('Success', res?.message);
+        navigation?.goBack();
+      }
+    } catch (error) {
+      console.log('Error submitting help request:', error);
+      Alert.alert('Error', 'Failed to send your message. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.log('Error submitting help request:', error);
-    Alert.alert('Error', 'Failed to send your message. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <View style={styles.container}>
-      <Header1x2x title={'Help & Support'} />
-      <KeyboardAvoidScrollview
-        contentContainerStyle={styles.keyboradscrollcontent}>
-        <Formik
-          initialValues={initialValues}
-          validationSchema={helpSupportFormValidation}
-          onSubmit={handleFormSubmit}>
-          {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            setFieldValue,
-            touched,
-            values,
-            errors,
-          }) => (
-            <>
-              {console.log('errror2', errors)}
+      <Header1x2x
+        title={'Help & Support'}
+        titleStyle={styles.headerTitle}
+        style={styles.header}
+      />
 
-<PrimaryInput
-  error={touched?.name ? t(errors.name) : ''}
-  label={'Name'}
-  isRequired={true}
-  onChangeText={handleChange('name')}
-  onBlur={handleBlur('name')}
-  value={values.name}
-/>
-<PrimaryInput
-  error={touched?.email ? t(errors.email) : ''}
-  label={'Email'}
-  isRequired={true}
-  editable={false}
-  isEmail={true}
-  onChangeText={handleChange('email')}
-  onBlur={handleBlur('email')}
-  value={values.email}
-/>
-<PrimaryInput
-  error={touched?.subject ? t(errors.subject) : ''}
-  label={'Subject'}
-  isRequired={true}
-  onChangeText={handleChange('subject')}
-  onBlur={handleBlur('subject')}
-  value={values.subject}
-/>
-<TextAreaInput
-  error={touched?.message ? t(errors.message) : ''}
-  label={'Message'}
-  onChangeText={handleChange('message')}
-  onBlur={handleBlur('message')}
-  value={values.message}
-/>
-              
+      <KeyboardAvoidScrollview contentContainerStyle={styles.keyboradscrollcontent}>
+        <View style={styles.formContainer}>
+          <View style={styles.welcomeSection}>
+            <Icon name="support-agent" size={mvs(40)} color={colors.primary} />
+            <Medium
+              style={styles.welcomeText}
+              label="We're here to help!"
+              color={colors.primary}
+              fontSize={mvs(18)}
+            />
+            <Medium
+              style={styles.subtitle}
+              label="Fill out the form below and we'll get back to you as soon as possible."
+              color={colors.text}
+              fontSize={mvs(14)}
+              numberOfLines={2}
+            />
+          </View>
 
-            <PrimaryButton
-  containerStyle={{
-    borderRadius: mvs(10),
-    marginVertical: mvs(60),
-  }}
-  loading={loading}
-  onPress={handleSubmit}
-  title={'Send'}
-/>
-            </>
-          )}
-        </Formik>
+          <Formik
+            initialValues={initialValues}
+            validationSchema={helpSupportFormValidation}
+            onSubmit={handleFormSubmit}>
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              touched,
+              values,
+              errors,
+            }) => (
+              <View style={styles.formSection}>
+                <Medium
+                  style={styles.sectionTitle}
+                  label="Contact Information"
+                  color={colors.primary}
+                  fontSize={mvs(16)}
+                />
+
+                <PrimaryInput
+                  error={touched?.name ? errors?.name : ''}
+                  label={'Full Name'}
+                  isRequired={true}
+                  onChangeText={handleChange('name')}
+                  onBlur={handleBlur('name')}
+                  value={values?.name}
+                  placeholder="Enter your full name"
+                  containerStyle={styles.inputContainer}
+                  labelStyle={{color: colors.primary}}
+                  leftIcon={<Icon name="person" size={mvs(20)} color={colors.primary} />}
+                />
+
+                <PrimaryInput
+                  error={touched?.email ? errors?.email : ''}
+                  label={'Email Address'}
+                  isRequired={true}
+                  editable={false}
+                  isEmail={true}
+                  onChangeText={handleChange('email')}
+                  onBlur={handleBlur('email')}
+                  value={values?.email}
+                  placeholder="Your email address"
+                  containerStyle={styles.inputContainer}
+                  labelStyle={{color: colors.primary}}
+                  leftIcon={<Icon name="email" size={mvs(20)} color={colors.primary} />}
+                />
+
+                <Medium
+                  style={[styles.sectionTitle, {marginTop: mvs(20)}]}
+                  label="How can we help you?"
+                  color={colors.primary}
+                  fontSize={mvs(16)}
+                />
+
+                <PrimaryInput
+                  error={touched?.subject ? errors?.subject : ''}
+                  label={'Subject'}
+                  isRequired={true}
+                  onChangeText={handleChange('subject')}
+                  onBlur={handleBlur('subject')}
+                  value={values?.subject}
+                  placeholder="Brief description of your issue"
+                  containerStyle={styles.inputContainer}
+                  labelStyle={{color: colors.primary}}
+                  leftIcon={<Icon name="subject" size={mvs(20)} color={colors.primary} />}
+                />
+
+                <TextAreaInput
+                  error={touched?.message ? errors?.message : ''}
+                  label={'Message'}
+                  onChangeText={handleChange('message')}
+                  onBlur={handleBlur('message')}
+                  value={values?.message}
+                  placeholder="Please describe your issue in detail..."
+                  containerStyle={styles.textAreaContainer}
+                  labelStyle={{color: colors.primary}}
+                  numberOfLines={5}
+                />
+
+                <PrimaryButton
+                  loading={loading}
+                  onPress={handleSubmit}
+                  title={'Send Message'}
+                  containerStyle={[styles.submitButton,{
+    backgroundColor: colors.primary
+                  }]}
+                  textStyle={styles.buttonText}
+                />
+              </View>
+            )}
+          </Formik>
+        </View>
       </KeyboardAvoidScrollview>
     </View>
   );

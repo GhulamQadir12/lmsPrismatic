@@ -1,210 +1,239 @@
 import {mvs} from 'config/metrices';
 import React from 'react';
-import {TouchableOpacity, View, Alert} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import Regular from 'typography/regular-text';
 import Medium from 'typography/medium-text';
 import styles from './styles';
 import {Row} from 'components/atoms/row';
 import {colors} from 'config/colors';
-import moment from 'moment';
-import RNFetchBlob from 'rn-fetch-blob';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {useAppSelector} from 'hooks/use-store';
+import {downloadFile, getFileExtension, renderFileIcon} from 'utils';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Alert } from 'react-native';
 
-const PaidInvoicesCard = ({item}) => {
-  console.log('Received item:', item);
+const PaidInvoicesCard = ({item, invoiceNumber, isExpanded, onToggle}) => {
   const configData = useAppSelector(s => s?.user?.configData);
+    const [downloadLoading, setDownloadLoading] = React.useState(false);
 
   const handleDownload = async () => {
-    const {fs} = RNFetchBlob;
-    const {DownloadDir} = fs.dirs;
-
-    const fileUrl = item?.file_url;
-    if (!fileUrl) {
-      Alert.alert('File Not Found', 'No file URL is available.');
-      return;
-    }
-
-    const fileName = fileUrl.split('/').pop();
-    const destPath = `${DownloadDir}/${fileName}`;
-
-    try {
-      const exists = await fs.exists(destPath);
-
-      if (exists) {
-        Alert.alert(
-          'File Already Downloaded',
-          'This file already exists. Do you want to re-download it?',
-          [
-            {text: 'Cancel', style: 'cancel'},
-            {
-              text: 'Re-Download',
-              onPress: () => downloadFile(fileUrl, destPath),
-            },
-          ],
-        );
-      } else {
-        downloadFile(fileUrl, destPath);
-      }
-    } catch (err) {
-      console.error('Error checking file existence:', err);
-      Alert.alert('Error', 'Something went wrong while checking file.');
-    }
+    const fileName = item?.file_url?.split('/').pop() || 'invoice.pdf';
+    downloadFile(item?.file_url, fileName, {
+      notificationTitle: 'Downloading Invoice',
+      notificationDescription: 'Your invoice is being downloaded',
+       onSuccess: path => setDownloadLoading(false),
+      onBeforeDownload: () => setDownloadLoading(true),
+       onError: error => {
+      // don’t use console.error
+      setDownloadLoading(false);
+      Alert.alert(
+        'Download failed',
+        error?.message || 'Something went wrong while downloading.'
+      );
+    },
+    });
   };
 
-  const downloadFile = (url, path) => {
-    const {config} = RNFetchBlob;
-
-    config({
-      fileCache: true,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        path,
-        description: 'Downloading receipt...',
-      },
-    })
-      .fetch('GET', url)
-      .then(res => {
-        console.log('File downloaded to:', res.path());
-        Alert.alert('Download Complete', `File saved to: ${res.path()}`);
-      })
-      .catch(error => {
-        console.error('Download failed:', error);
-        Alert.alert('Download Failed', 'Could not download the file.');
-      });
+  const formatAmount = (amount) => {
+    if (!amount) return 'N/A';
+    return `$${parseFloat(amount).toFixed(2)}`;
   };
-
-  const dateOnly = moment(item?.created_at).format('YYYY-MM-DD');
 
   return (
-    <View style={styles.infoContainer}>
-      <TouchableOpacity
-        style={styles.documentContainer}
-        onPress={handleDownload}>
-        {/* <Row style={{ justifyContent: 'center', gap:mvs(15) }}>
-    <FontAwesome
-            name="file-pdf-o"
-            size={mvs(20)}
-            color={colors.red}
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={onToggle}
+      style={styles.container}
+    >
+      <View style={styles.cardHeader}>
+        <View style={[styles.invoiceNumber,{
+    backgroundColor: colors.primary
+        }]}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.white}
+            label={`${invoiceNumber}`}
           />
-      <View>
-        <Medium label={item?.receipt_id} fontSize={16} color={colors.primary} style={{textDecorationLine:'underline'}} />
-      </View>
-      </Row> */}
-      </TouchableOpacity>
-      <Row>
-        <View style={{flex: 1}}>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Id :'}
-              />
-            </View>
-            <View style={{flex: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.id || 'N/A'}
-                numberOfLines={2}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Branch :'}
-              />
-            </View>
-            <View style={{flex: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.division_name || 'N/A'}
-                numberOfLines={2}
-              />
-            </View>
-          </Row>
-
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={`${
-                  configData?.related_type == '1' ? 'Batch' : 'Session'
-                }:`}
-              />
-            </View>
-            <View style={{flexGrow: 1}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.batch_name || 'N/A'}
-              />
-            </View>
-          </Row>
-
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Courses :'}
-              />
-            </View>
-            <View style={{width: '65%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.program_name || 'N/A'}
-                numberOfLines={100}
-              />
-            </View>
-          </Row>
-
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Invoice :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Row
-                style={{
-                  justifyContent: 'flex-start',
-                  gap: mvs(10),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity onPress={handleDownload}>
-                  <Medium
-                    fontSize={mvs(14)}
-                    color={colors.red}
-                    label={item?.receipt_id || ''}
-                    style={{textDecorationLine: 'underline'}}
-                    numberOfLines={3}
-                  />
-                </TouchableOpacity>
-                <FontAwesome
-                  name="file-pdf-o"
-                  size={mvs(20)}
-                  color={colors.red}
-                />
-              </Row>
-            </View>
-          </Row>
         </View>
-      </Row>
-    </View>
+        
+        <View style={styles.headerContent}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.primary}
+            label={item?.receipt_id || 'Invoice'}
+            numberOfLines={1}
+            style={styles.invoiceTitle}
+          />
+          <Medium
+            fontSize={mvs(12)}
+            color={colors.cyan}
+            label={item?.division_name || 'N/A'}
+          />
+        </View>
+        
+        <Icon 
+          name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
+          size={mvs(24)} 
+          color={colors.primary} 
+        />
+      </View>
+
+      {isExpanded && (
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="business" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Branch:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.division_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="class" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={`${configData?.related_type == '1' ? 'Batch' : 'Session'}:`}
+                style={styles.labelText}
+                numberOfLines={2}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.batch_name || 'N/A'}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="menu-book" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Courses:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.program_name || 'N/A'}
+              numberOfLines={3}
+              style={styles.valueText}
+            />
+          </View>
+
+          {item?.amount && (
+            <View style={styles.detailRow}>
+              <View style={styles.labelContainer}>
+                <Icon name="attach-money" size={mvs(16)} color={colors.placeholder} />
+                <Regular
+                  fontSize={mvs(13)}
+                  color={colors.placeholder}
+                  label={'Amount:'}
+                  style={styles.labelText}
+                />
+              </View>
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={formatAmount(item?.amount)}
+                style={[styles.valueText]}
+              />
+            </View>
+          )}
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="receipt" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Invoice:'}
+                style={styles.labelText}
+              />
+            </View>
+            <TouchableOpacity 
+              onPress={handleDownload}
+              style={styles.fileContainer}
+              // disabled={!item?.file_url || downloadLoading}
+            >
+              {renderFileIcon(
+                getFileExtension(item?.file_url),
+                mvs(20),
+                colors.primary,
+              )}
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={
+                  downloadLoading
+                    ? 'Downloading...'
+                    : item?.receipt_id || 'No file attached'
+                }
+                  numberOfLines={2}
+                style={styles.fileText}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {item?.payment_date && (
+            <View style={styles.detailRow}>
+              <View style={styles.labelContainer}>
+                <Icon name="event" size={mvs(16)} color={colors.placeholder} />
+                <Regular
+                  fontSize={mvs(13)}
+                  color={colors.placeholder}
+                  label={'Payment Date:'}
+                  style={styles.labelText}
+                />
+              </View>
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={item?.payment_date}
+                style={styles.valueText}
+              />
+            </View>
+          )}
+
+          {item?.payment_method && (
+            <View style={styles.detailRow}>
+              <View style={styles.labelContainer}>
+                <Icon name="payment" size={mvs(16)} color={colors.placeholder} />
+                <Regular
+                  fontSize={mvs(13)}
+                  color={colors.placeholder}
+                  label={'Payment Method:'}
+                  style={styles.labelText}
+                  numberOfLines={2}
+                />
+              </View>
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={item?.payment_method}
+                style={styles.valueText}
+                numberOfLines={2}
+              />
+            </View>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 

@@ -17,14 +17,23 @@ const styles = StyleSheet.create({
     marginTop: mvs(20),
     borderRadius: mvs(10),
     paddingVertical: mvs(30),
+      shadowColor: colors.shadowColor,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
   },
 
   imgUpload: {
-    height: mvs(120),
-    width: mvs(120),
-    borderRadius: mvs(50),
-    alignSelf: 'center',
-    marginTop: mvs(10),
+    height: mvs(115),
+    width: mvs(115),
+    borderRadius: mvs(100),
   },
   inputcontainer: {
     marginTop: mvs(20),

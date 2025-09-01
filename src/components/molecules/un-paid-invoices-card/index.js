@@ -14,176 +14,237 @@ import {Checkbox} from 'components/atoms/checkbox';
 import { PrimaryButton } from 'components/atoms/buttons';
 import RNFetchBlob from 'rn-fetch-blob';
 import { useAppSelector } from 'hooks/use-store';
+import { downloadFile } from 'utils';
 
 
 const UnPaidInvoicesCard = ({item}) => { 
   const configData = useAppSelector(s => s?.user?.configData);
 
+    const [downloadLoading, setDownloadLoading] = React.useState(false);
 
   const handleDownload = async () => {
-  const { config, fs } = RNFetchBlob;
-  const { DownloadDir } = fs.dirs; // Downloads directory (Android)
-
-  const fileUrl = `https://ace.prismaticcrm.com/upload/assignments/${item?.assignment_img}`;
-  const fileName = item?.assignment_img || 'assignment.pdf'; // Default file name if not provided
-  const destPath = `${DownloadDir}/${fileName}`;
-
-  config({
-    fileCache: true,
-    addAndroidDownloads: {
-      useDownloadManager: true,
-      notification: true,
-      path: destPath,
-      description: 'Downloading file...',
+    const fileName = item?.file_url?.split('/').pop() || 'invoice.pdf';
+    downloadFile(item?.file_url, fileName, {
+      notificationTitle: 'Downloading Invoice',
+      notificationDescription: 'Your invoice is being downloaded',
+       onSuccess: path => setDownloadLoading(false),
+      onBeforeDownload: () => setDownloadLoading(true),
+       onError: error => {
+      // don’t use console.error
+      setDownloadLoading(false);
+      Alert.alert(
+        'Download failed',
+        error?.message || 'Something went wrong while downloading.'
+      );
     },
-  })
-    .fetch('GET', fileUrl)
-    .then((res) => {
-      console.log('File downloaded to:', res.path());
-      alert('Download complete!');
-    })
-    .catch((error) => {
-      console.error('Download failed:', error);
-      alert('Download failed!');
     });
-};
-
+  };
+  const formatAmount = (amount) => {
+    if (!amount) return 'N/A';
+    return `$${parseFloat(amount).toFixed(2)}`;
+  };
 const dateTimeString = item?.created_at;
 
 const dateOnly = moment(dateTimeString).format("YYYY-MM-DD");
 
 console.log(dateOnly); // Output: 2025-07-08
 
-  return (
-       <View style={styles.infoContainer}>
-       <View style={styles.documentContainer}>
-        <Medium label={item?.receipt_id} fontSize={16} color={colors.primary} />
+ return (
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={onToggle}
+      style={styles.container}
+    >
+      <View style={styles.cardHeader}>
+        <View style={[styles.invoiceNumber,{
+    backgroundColor: colors.primary
+        }]}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.white}
+            label={`${invoiceNumber}`}
+          />
         </View>
-        <Row>
-          <View style={{flex: 1}}>
-            <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={'Id :'}
-                />
-              </View>
-              <View style={{flex: 1}}>
-                <Medium
-                  fontSize={mvs(14)}
-                  color={colors.primary}
-                  label={item?.id || 'N/A'}
-                  numberOfLines={2}
-                />
-              </View>
-            </Row>
-            <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={'Branch :'}
-                />
-              </View>
-              <View style={{flex: 1}}>
-                <Medium
-                  fontSize={mvs(14)}
-                  color={colors.primary}
-                  label={item?.division_name || 'N/A'}
-                  numberOfLines={2}
-                />
-              </View>
-            </Row>
-           
-           
-            
-            
-            <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  numberOfLines={3}
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={`${configData?.related_type ==  '1' ? 'Batch' : 'Session'}:`}
-                />
-              </View>
-              <View style={{flexGrow: 1}}>
-                <Medium
-                  fontSize={mvs(14)}
-                  color={colors.primary}
-                  label={item?.batch_name || 'N/A'}
-                />
-              </View>
-            </Row>
-
-            <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  numberOfLines={3}
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={'Courses :'}
-                />
-              </View>
-              <View style={{width: '65%'}}>
-                <Medium
-                  fontSize={mvs(14)}
-                  color={colors.primary}
-                  label={item?.program_name || 'N/A'}
-                  numberOfLines={100}
-                />
-              </View>
-            </Row>
-
-             <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Row
-                style={{
-                  justifyContent: 'flex-start',
-                  gap: mvs(10),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity onPress={handleDownload}>
-                  <Medium
-                    fontSize={mvs(14)}
-                    color={colors.red}
-                    label={item?.receipt_id || ''}
-                    style={{textDecorationLine: 'underline'}}
-                    numberOfLines={3}
-                  />
-                </TouchableOpacity>
-                <FontAwesome
-                  name="file-pdf-o"
-                  size={mvs(20)}
-                  color={colors.red}
-                />
-              </Row>
-            </View>
-            {/* <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-              <View style={{width: '35%'}}>
-                <Regular
-                  numberOfLines={3}
-                  fontSize={mvs(15)}
-                  color={colors.placeholder}
-                  label={'Courses :'}
-                />
-              </View>
-              <View style={{flexGrow: 1}}>
-                {intrestedList.map(item => (
-                  <Medium
-                    key={item.id}
-                    fontSize={mvs(14)}
-                    color={colors.primary}
-                    label={'• ' + item.name}
-                  />
-                ))}
-              </View>
-            </Row> */}
-          
-          </View>
-        </Row>
+        
+        <View style={styles.headerContent}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.primary}
+            label={item?.receipt_id || 'Invoice'}
+            numberOfLines={1}
+            style={styles.invoiceTitle}
+          />
+          <Medium
+            fontSize={mvs(12)}
+            color={colors.cyan}
+            label={item?.division_name || 'N/A'}
+          />
+        </View>
+        
+        <Icon 
+          name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
+          size={mvs(24)} 
+          color={colors.primary} 
+        />
       </View>
-  
+
+      {isExpanded && (
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="business" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Branch:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.division_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="class" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={`${configData?.related_type == '1' ? 'Batch' : 'Session'}:`}
+                style={styles.labelText}
+                numberOfLines={2}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.batch_name || 'N/A'}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="menu-book" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Courses:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.program_name || 'N/A'}
+              numberOfLines={3}
+              style={styles.valueText}
+            />
+          </View>
+
+          {item?.amount && (
+            <View style={styles.detailRow}>
+              <View style={styles.labelContainer}>
+                <Icon name="attach-money" size={mvs(16)} color={colors.placeholder} />
+                <Regular
+                  fontSize={mvs(13)}
+                  color={colors.placeholder}
+                  label={'Amount:'}
+                  style={styles.labelText}
+                />
+              </View>
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={formatAmount(item?.amount)}
+                style={[styles.valueText]}
+              />
+            </View>
+          )}
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="receipt" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Invoice:'}
+                style={styles.labelText}
+              />
+            </View>
+            <TouchableOpacity 
+              onPress={handleDownload}
+              style={styles.fileContainer}
+              // disabled={!item?.file_url || downloadLoading}
+            >
+              {renderFileIcon(
+                getFileExtension(item?.file_url),
+                mvs(20),
+                colors.primary,
+              )}
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={
+                  downloadLoading
+                    ? 'Downloading...'
+                    : item?.receipt_id || 'No file attached'
+                }
+                  numberOfLines={2}
+                style={styles.fileText}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {item?.payment_date && (
+            <View style={styles.detailRow}>
+              <View style={styles.labelContainer}>
+                <Icon name="event" size={mvs(16)} color={colors.placeholder} />
+                <Regular
+                  fontSize={mvs(13)}
+                  color={colors.placeholder}
+                  label={'Payment Date:'}
+                  style={styles.labelText}
+                />
+              </View>
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={item?.payment_date}
+                style={styles.valueText}
+              />
+            </View>
+          )}
+
+          {item?.payment_method && (
+            <View style={styles.detailRow}>
+              <View style={styles.labelContainer}>
+                <Icon name="payment" size={mvs(16)} color={colors.placeholder} />
+                <Regular
+                  fontSize={mvs(13)}
+                  color={colors.placeholder}
+                  label={'Payment Method:'}
+                  style={styles.labelText}
+                  numberOfLines={2}
+                />
+              </View>
+              <Medium
+                fontSize={mvs(14)}
+                color={colors.primary}
+                label={item?.payment_method}
+                style={styles.valueText}
+                numberOfLines={2}
+              />
+            </View>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 

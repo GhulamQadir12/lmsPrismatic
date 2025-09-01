@@ -6,10 +6,11 @@ const styles = StyleSheet.create({
    questionContainer: {
       backgroundColor: colors.white,
       borderRadius: mvs(10),
-      padding: mvs(20),
-      marginBottom: mvs(20),
-      marginHorizontal: mvs(10),
-      shadowColor: '#000',
+      paddingVertical: mvs(20),
+      paddingHorizontal: mvs(10),
+      marginVertical: mvs(20),
+      marginHorizontal: mvs(20),
+      shadowColor: colors.shadowColor,
       shadowOffset: {
         width: 0,
         height: 2,
@@ -37,14 +38,6 @@ const styles = StyleSheet.create({
       borderRadius: mvs(8),
       borderWidth: 1,
       borderColor: colors.border,
-      // shadowColor: '#000',
-      // shadowOffset: {
-      //   width: 0,
-      //   height: 1,
-      // },
-      // shadowOpacity: 0.1,
-      // shadowRadius: 1.41,
-      // elevation: 2,
     },
     selectedOption: {
       backgroundColor: '#f5f2f0',

@@ -118,11 +118,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'white',
     position: 'absolute',
-    bottom: 0,
+    bottom: mvs(20),
     // marginHorizontal: mvs(20),
     alignSelf: 'center',
-    width:'100%',
+    width:'90%',
     flex:1,
   },
+  title:{
+    color: colors.white,
+    fontSize: mvs(18),
+  },
+  
 });
 export default styles;

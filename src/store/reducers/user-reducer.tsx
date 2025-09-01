@@ -10,6 +10,7 @@ type Props = {
   notifications: any[];
   wallet: any;
   configData: any;
+  role: string;
   unreadNotification: number;
   countries: any[];
 };
@@ -20,6 +21,7 @@ const initialState: Props = {
   notifications: [],
   wallet: {},
   configData: {},
+  role: '',
   unreadNotification: 0,
   countries: [],
 };
@@ -55,6 +57,9 @@ export const userSlice = createSlice({
     setConfigData: (state, action) => {
       state.configData = action.payload;
     },
+    setRole: (state, action) => {
+      state.role = action.payload;
+    },
     resetUser: (state, action) => {
       return initialState;
     },
@@ -71,6 +76,7 @@ export const {
   setLocation,
   setNotifications,
   setWallet,
+  setRole,
   setConfigData,
   setCountries,
   resetUser,

@@ -10,9 +10,15 @@ const styles = StyleSheet.create({
     marginTop: mvs(20),
   },
 btnstyle:{borderBottomWidth: 1},
-  backgroundImage: {
+ backgroundImage: {
+    flex: 1,
     width: '100%',
-    height: mvs(423),
+    height: '100%',
+  },
+  gradientOverlay: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   welcomeText: {
     alignSelf: 'center',
@@ -21,21 +27,21 @@ btnstyle:{borderBottomWidth: 1},
     alignSelf: 'center',
     marginTop: mvs(6),
   },
-
   lottie: {
-    width: '100%',
+    width: '80%',
     height: '80%',
   },
   bottomcontainer: {
     backgroundColor: colors.white,
     width: '100%',
-    height: '48%',
+    height: '50%',
     borderTopRightRadius: mvs(20),
     borderTopLeftRadius: mvs(20),
   },
   lottiecontainer: {
-    height: '52%',
+    height: '50%',
     alignItems: 'center',
+    justifyContent:'center'
   },
 });
 export default styles;

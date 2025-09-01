@@ -16,6 +16,7 @@ import {
   resetUser,
   setCountries,
   setNotifications,
+  setRole,
   setUserInfo,
 } from './../../store/reducers/user-reducer';
 import {goBack, resetStack} from 'navigation/navigation-ref';
@@ -413,7 +414,7 @@ export const getConfigData = async () => {
 export const getNotifications = async (values:any) => {
   try {
     const token = await AsyncStorage.getItem(STORAGEKEYS.token);
-    const url = `${URLS.notification.get_notification}`;
+    const url = `${URLS.notification.send_notification}`;
     const res = await getAuthorizedData(url, token || undefined);
     console.log('res of Get notification=>', res);
     return res;
@@ -586,6 +587,7 @@ export const onLogin = (
       // const uRes = await getUserInfo();
       // console.log('userinfo', uRes);
       dispatch(setUserInfo(res?.user));
+      dispatch(setRole(res?.user?.role || ''));
       resetStack('Drawer');
       console.log('login res', res);
       return res;
@@ -644,6 +646,8 @@ export const onLogoutPress = () => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     try {
       // await logout();
+      const url = `${URLS.auth.logOut}`;
+      // await getData(url);
       await UTILS.clearStorage();
       dispatch(resetUser(null));
       resetStack('Splash');

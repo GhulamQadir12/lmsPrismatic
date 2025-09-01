@@ -1,106 +1,181 @@
 import CustomFlatList from 'components/atoms/custom-flatlist';
-import FormHeader from 'components/atoms/headers/header';
 import {Loader} from 'components/atoms/loader';
 import {Row} from 'components/atoms/row';
-import LeaveRequestCard from 'components/molecules/leave-request-card';
 import {colors} from 'config/colors';
 import {mvs} from 'config/metrices';
-import React, {useEffect, useState} from 'react';
-import {TouchableOpacity, View, ScrollView, FlatList} from 'react-native';
-import Regular from 'typography/regular-text';
+import React, {useCallback, useState} from 'react';
+import {View, Alert, TouchableOpacity} from 'react-native';
+import Item from 'components/molecules/chatBot-chat';
+import {MessageInput} from 'components/atoms/inputs';
+import {UTILS} from 'utils';
+import {
+  onSendChat,
+  onSendMessage,
+  onUpdateChat,
+} from 'services/api/chat-api-actions';
+import {useAppSelector} from 'hooks/use-store';
 import styles from './style';
 import Bold from 'typography/bold-text';
-import {navigate} from 'navigation/navigation-ref';
-import AdvanceRequestCard from 'components/molecules/advance-request-card';
-import Feather from 'react-native-vector-icons/Feather';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import {
-  getAdvanceList,
-  getStrikeLetterList,
-} from 'services/api/auth-api-actions';
-import Header1x2x from 'components/atoms/headers/header-1x-2x';
-import {Calendar} from 'react-native-big-calendar';
-import {PlusButton} from 'components/atoms/buttons';
-import CalendarEvent from 'components/atoms/calender';
-import Medium from 'typography/medium-text';
-import StrikeLetterCard from 'components/molecules/strike-letter-card';
-import * as IMG from 'assets/images';
-import ChatListCard from 'components/molecules/chat-list-card';
-import Item from 'components/molecules/employee-chat';
-import {Text} from 'react-native';
-import {Image} from 'react-native';
-import {MessageInput, PrimaryInput} from 'components/atoms/inputs';
-import { UTILS } from 'utils';
+import {MenuIcon} from 'assets/icons/tab-icons';
+import BotChatHistoryModal from 'components/molecules/modals/botChat-history-modal';
 
 const BotChat = ({navigation}) => {
-  const [textInput, setTextInput] = React.useState('');
-  const [messages, setMessages] = React.useState([]);
-  const [profileImageUri, setProfileImageUri] = useState(null);
-  const [coverImageUri, setCoverImageUri] = useState(null);
-    const [inputText, setInputText] = useState('');
+  const [textInput, setTextInput] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loadingMap, setLoadingMap] = useState({});
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [currentChatId, setCurrentChatId] = useState(null); // Add this state
 
+  const user = useAppSelector(s => s?.user?.userInfo);
 
-  const pickImage = setImageUri => {
-    const options = {
-      mediaType: 'photo',
-      quality: 1,
-    };
-    launchImageLibrary(options, response => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorMessage) {
-        console.log('Image Picker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        setImageUri(response.assets[0].uri);
+  // Load selected chat messages when selectedChat changes
+  React.useEffect(() => {
+    if (selectedChat) {
+      setMessages(
+        selectedChat?.conversation?.map(msg => ({
+          text: msg?.text,
+          answer: msg?.answer,
+          id: msg?.id,
+        })),
+      );
+    }
+  }, [selectedChat]);
+
+  const sendMessage = async () => {
+    if (!textInput.trim()) return;
+
+    const messageId = Date.now().toString();
+    try {
+      const newMessage = {
+        text: textInput,
+        answer: '',
+        id: messageId,
+      };
+
+      setLoadingMap(prev => ({...prev, [messageId]: true}));
+
+      // Update messages immediately with the new question
+      setMessages(prev => [...prev, newMessage]);
+      setTextInput('');
+      const userId = user?.id;
+
+      // First send the message to get response
+      const res = await onSendMessage({
+        student_id: String(userId),
+        question: textInput,
+      });
+
+      if (res?.answer) {
+        // Create the complete updated messages array
+        const updatedMessages = [
+          ...messages,
+          {...newMessage, answer: res.answer},
+        ];
+
+        // Update UI state with both question and answer
+        setMessages(updatedMessages);
+
+        // Prepare conversation data with ONLY the new message for API
+        const newConversationItem = {
+          id: messageId,
+          text: textInput,
+          answer: res.answer,
+        };
+
+        // If this is a new chat (no currentChatId), call sendChat with full conversation
+        if (!currentChatId && !selectedChat) {
+          const sendChatRes = await onSendChat({
+            conversation: updatedMessages, // Send full conversation for new chat
+          });
+          if (sendChatRes?.data?.id) {
+            setCurrentChatId(sendChatRes.data.id);
+          }
+        }
+        // If this is an existing chat, call updateChat with ONLY the new message
+        else {
+          const chatIdToUpdate = selectedChat?.id || currentChatId;
+          await onUpdateChat(chatIdToUpdate, {
+            conversation: [newConversationItem], // Send only the new message
+          });
+        }
       }
-    });
+    } catch (error) {
+      console.log('error', error);
+      Alert.alert('Error', UTILS.returnError(error));
+      // Remove the message if there was an error
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    } finally {
+      setLoadingMap(prev => ({...prev, [messageId]: false}));
+    }
   };
 
   const renderItem = ({item}) => (
-    <Item item={item} />
+    <Item item={item} isLoading={loadingMap[item?.id]} />
   );
 
-  const sendMessage = () => {
-    if (textInput.trim()) {
-      setMessages([...messages, {text: textInput, id: Date.now().toString()}]);
-      setTextInput('');
-    }
+  const handleNewChat = () => {
+    setSelectedChat(null); // Clear any selected chat
+    setCurrentChatId(null); // Clear current chat ID
+    setMessages([]); // Clear messages
+    setTextInput(''); // Clear input
   };
-const openGallery = async () => {
- await UTILS._returnImageGallery(pickedImage => {
-    setProfileImageUri(pickedImage);
-    setCoverImageUri(pickedImage);
-    })};
-  const Renderitem = item => <Item item={item} />;
-
   return (
     <View style={styles.container}>
-      <Header1x2x back={true} title={'Chat with Prismatic Bot'} style={{height: mvs(60)}} />
-      <View style={{flex: 1, padding: mvs(20)}}>
-        <FlatList
-        data={messages}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{padding: mvs(0),flexGrow: 1}}
-        style={{marginBottom: mvs(50)}}
-        inverted={false} 
-        showsVerticalScrollIndicator={false}
-      />
-      
-      <Row
-        style={[styles.inputContainer,{
-          alignItems: 'center',
-          paddingBottom: Platform.OS === 'ios' ? mvs(50) : mvs(10),
-          backgroundColor: colors.white,
-        }]}>
-        <MessageInput 
-          value={textInput} 
-          onChangeText={setTextInput} 
-          sendMessage={sendMessage} 
-          onPress={openGallery}
-        />
-      </Row>
+      <View style={{backgroundColor: colors.primary}}>
+        <Row
+          style={{
+            alignItems: 'center',
+            backgroundColor: colors.primary,
+            marginHorizontal: mvs(10),
+            marginVertical: mvs(15),
+          }}>
+          <View style={{width: '80%'}}>
+            <Bold
+              label={selectedChat?.title || 'Chat with Prismatic Bot'}
+              style={styles.title}
+            />
+            {selectedChat && (
+              <TouchableOpacity
+                onPress={() => setSelectedChat(null)}
+                style={{position: 'absolute', left: 0}}>
+                {/* Add your back icon here */}
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity onPress={() => setShowInstructions(true)}>
+            <MenuIcon />
+          </TouchableOpacity>
+        </Row>
       </View>
+
+      <View style={{flex: 1}}>
+        <View style={{marginBottom: mvs(50), flex: 1}}>
+          <CustomFlatList
+            inverted
+            showsVerticalScrollIndicator={false}
+            data={[...messages].reverse()}
+            renderItem={renderItem}
+            emptyShow={false}
+          />
+        </View>
+
+        <Row style={styles.inputContainer}>
+          <MessageInput
+            value={textInput}
+            onChangeText={setTextInput}
+            sendMessage={sendMessage}
+            disabled={Object.values(loadingMap).some(Boolean)}
+          />
+        </Row>
+      </View>
+
+      <BotChatHistoryModal
+        visible={showInstructions}
+        onClose={() => setShowInstructions(false)}
+        onSelectChat={setSelectedChat}
+        onNewChat={handleNewChat} // Add this prop
+      />
     </View>
   );
 };

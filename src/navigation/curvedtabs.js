@@ -8,7 +8,6 @@ import Announcement from 'screens/announcement';
 import ChatList from 'screens/chat-list';
 import EmployeeChat from 'screens/bot-chat';
 import HomeTab from 'screens/home-tab';
-import MessageHomeScreen from 'screens/messageHome';
 import Notifications from 'screens/notifications';
 import TotalOrderScreen from 'screens/total-order-request';
 import UserTab from 'screens/user-tab';
@@ -16,6 +15,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import HelpDesk from 'screens/help-desk';
 import AiChat from 'screens/ai-chat-screen';
 import HelpSupportList from 'screens/help-support-list-screen';
+import BotChat from 'screens/bot-chat';
 
 
 function MyTabBar({state, descriptors, navigation}) {
@@ -77,8 +77,8 @@ function MyTabBar({state, descriptors, navigation}) {
         marginTop: mvs(isFocused ? -20 : 0),
       }}>
                <Icon
-        height={route.name === 'HelpSupportList' || 'AiChat' ? mvs(25) : mvs(20)}
-        width={route.name === 'HelpSupportList' || 'AiChat' ? mvs(25) : mvs(20)}
+        height={route.name === 'HelpSupportList' || 'BotChat' ? mvs(25) : mvs(20)}
+        width={route.name === 'HelpSupportList' || 'BotChat' ? mvs(25) : mvs(20)}
       />
     </View>
   </TouchableOpacity>
@@ -98,7 +98,7 @@ export const TabBar = () => {
       screenOptions={{headerShown: false}}
       tabBar={props => <MyTabBar {...props} />}>
       <Tab.Screen name="Home" component={HomeTab} />
-      <Tab.Screen name="AiChat" component={AiChat} />
+      <Tab.Screen name="BotChat" component={BotChat} />
       <Tab.Screen name="HelpSupportList" component={HelpSupportList} />
       {/* <Tab.Screen name="Message" component={EmployeeChat} /> */}
       {/* <Tab.Screen name="Announcement" component={Announcement} /> */}

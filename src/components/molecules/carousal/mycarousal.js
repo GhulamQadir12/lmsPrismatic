@@ -3,7 +3,7 @@ import {colors} from 'config/colors';
 import {mvs} from 'config/metrices';
 import moment from 'moment';
 import React, {useRef, useState} from 'react';
-import {View, StyleSheet, Dimensions} from 'react-native';
+import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
 import Bold from 'typography/bold-text';
 import Regular from 'typography/regular-text';
@@ -11,10 +11,10 @@ import Fontisto from 'react-native-vector-icons/Fontisto';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {Row} from 'components/atoms/row';
 
-const MyCarousel = ({data, gettingNews}) => {
+const MyCarousel = ({data, gettingNews,onPress}) => {
   const {width} = Dimensions.get('window');
-  const ITEM_WIDTH = width * 0.75; // Each item is 80% of screen width
-  const SIDE_SPACING = (width - ITEM_WIDTH) / 2.5; // Space to show left/right images
+  const ITEM_WIDTH = (width - mvs(40)) * 0.82; // Account for 20+20 margin
+  const SIDE_SPACING = ((width - mvs(40)) - ITEM_WIDTH) / 1.8; // Adjust for margin
   const [forceUpdate, setForceUpdate] = useState(false);
 
   const carouselRef = useRef(null);
@@ -24,7 +24,11 @@ const MyCarousel = ({data, gettingNews}) => {
       gettingNews ? (
         <Loader />
       ) : (
-        <View style={styles.slide}>
+        <TouchableOpacity onPress={()=>onPress(item)}>
+        <View style={[styles.slide,{
+    borderColor: colors.primary,
+
+        }]}>
           <Row
             style={{
               justifyContent: 'flex-start',
@@ -67,8 +71,8 @@ const MyCarousel = ({data, gettingNews}) => {
             <View style={{width: '80%'}}>
               <Bold
                 fontSize={mvs(15)}
-                color={colors.primary}
-                numberOfLines={3}
+                color={colors.black}
+                numberOfLines={1}
                 label={item?.title}
                 style={styles.title}
               />
@@ -83,12 +87,13 @@ const MyCarousel = ({data, gettingNews}) => {
             }}>
             <Regular
               fontSize={mvs(12)}
-              numberOfLines={3}
+              numberOfLines={2}
               label={item?.description}
               style={styles.slidertitle}
             />
           </View>
         </View>
+        </TouchableOpacity>
       )
     );
   };
@@ -98,11 +103,11 @@ const MyCarousel = ({data, gettingNews}) => {
       ref={carouselRef}
       data={data}
       renderItem={_renderItem}
-      sliderWidth={width}
+      sliderWidth={width - mvs(40)} // Reduce slider width by the margin
       itemWidth={ITEM_WIDTH}
-      inactiveSlideScale={0.85}
+      inactiveSlideScale={0.9}
       inactiveSlideOpacity={0.7}
-      loop={false}
+      loop={true}
       autoplay={true}
       enableSnap={true}
       loopClonesPerSide={2} //  Prevents clipping of edges
@@ -123,11 +128,12 @@ const styles = StyleSheet.create({
     // justifyContent: 'center',
     // alignItems: 'center',
     // backgroundColor: 'red',
+            backgroundColor:colors.lightsilver,
     borderRadius: mvs(5),
-    borderColor: colors.primary,
-    borderWidth: mvs(2),
-    paddingVertical: mvs(5),
+    // borderWidth: mvs(1),
+    paddingVertical: mvs(8),
     paddingHorizontal: mvs(10),
+    // width: '90%',
   },
   title: {
     // marginBottom: mvs(10),

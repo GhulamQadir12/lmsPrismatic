@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     width: '100%',
-    padding: mvs(20),
+    padding: mvs(10),
     backgroundColor: colors.silver,
     borderRadius: mvs(10),
     

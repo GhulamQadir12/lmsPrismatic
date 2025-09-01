@@ -3,11 +3,13 @@ import {mvs} from 'config/metrices';
 import {StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: colors.white},
   dot: {
     width: mvs(12),
     height: mvs(12),
     borderRadius: 6,
     marginHorizontal: mvs(3),
+    marginBottom: mvs(100),
   },
   button: {
     backgroundColor: colors.white,
@@ -17,28 +19,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: mvs(15),
   },
-  container: {
-    flex: 1,
-    // Add any other styles for the container
-  },
+
   paginationContainer: {
     position: 'absolute',
-    bottom: 16, // Adjust the bottom value to position the pagination container as desired
+    bottom: mvs(16), // Adjust the bottom value to position the pagination container as desired
     alignSelf: 'center',
     // Add any other styles for the pagination container
   },
+  
   paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 6,
+    width: mvs(8),
+    height: mvs(8),
+    borderRadius: mvs(4),
+    marginHorizontal: mvs(6),
+    marginTop: mvs(400),
     // Add any other styles for the pagination dot
   },
-  bottom: {
-    position: 'absolute',
-    bottom: mvs(60),
-    paddingHorizontal: mvs(20),
-    width: '100%',
-  },
+ 
 });
 export default styles;

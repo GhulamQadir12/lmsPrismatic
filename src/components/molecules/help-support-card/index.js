@@ -1,140 +1,201 @@
 import {mvs} from 'config/metrices';
 import React from 'react';
-import {Alert, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import Regular from 'typography/regular-text';
 import styles from './styles';
-import {ClockIcon, Tick} from 'assets/icons';
 import {Row} from 'components/atoms/row';
 import {colors} from 'config/colors';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Bold from 'typography/bold-text';
 import Medium from 'typography/medium-text';
 import moment from 'moment';
-import {Checkbox} from 'components/atoms/checkbox';
-import {PrimaryButton} from 'components/atoms/buttons';
-import RNFetchBlob from 'rn-fetch-blob';
-import {Image} from 'react-native';
-import * as IMG from 'assets/images';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
+const HelpSupportCard = ({item, numberId, isExpanded, onToggle}) => {
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'resolved':
+      case 'completed':
+        return colors.green; // Green
+      case 'in progress':
+      case 'pending':
+        return colors.yellow; // Yellow
+      case 'open':
+      case 'new':
+        return colors.bluecolor; // Blue
+      case 'closed':
+      case 'cancelled':
+        return colors.red; // Red
+      default:
+        return colors.primary; // Default color
+    }
+  };
 
-
-const HelpSupportCard = ({item}) => {
-
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return moment(dateString).format('DD MMM YYYY');
+  };
 
   return (
-    <View style={styles.infoContainer}>
-      <Row>
-        <View style={{flex: 1}}>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Id :'}
-              />
-            </View>
-            <View style={{flex: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.id || 'N/A'}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Name :'}
-              />
-            </View>
-            <View style={{flex: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.contact_name || 'N/A'}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Email :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.contact_email || 'N/A'}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Subject :'}
-              />
-            </View>
-            <View style={{flexGrow: 1, maxWidth: '60%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.contact_subject || 'N/A'}
-                numberOfLines={3}
-              />
-            </View>
-          </Row>
-        
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Date :'}
-              />
-            </View>
-            <View style={{width: '65%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={moment(item?.lec_date).format('YYYY-MM-DD') || 'N/A'}
-              />
-            </View>
-          </Row>
-          <Row style={{justifyContent: 'flex-start', marginTop: mvs(10)}}>
-            <View style={{width: '35%'}}>
-              <Regular
-                numberOfLines={3}
-                fontSize={mvs(15)}
-                color={colors.placeholder}
-                label={'Status :'}
-              />
-            </View>
-            <View style={{width: '65%'}}>
-              <Medium
-                fontSize={mvs(14)}
-                color={colors.primary}
-                label={item?.status || 'N/A'}
-                numberOfLines={13}
-              />
-            </View>
-          </Row>
-        
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={onToggle}
+      style={styles.container}
+    >
+      <View style={styles.cardHeader}>
+        <View style={styles.ticketNumber}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.white}
+            label={`${numberId}`}
+          />
         </View>
-      </Row>
-    </View>
+        
+        <View style={styles.headerContent}>
+          <Medium
+            fontSize={mvs(16)}
+            color={colors.primary}
+            label={item?.contact_other_subject || 'N/A'}
+            numberOfLines={1}
+            style={styles.ticketTitle}
+          />
+          <Medium
+            fontSize={mvs(12)}
+            color={colors.cyan}
+            label={formatDate(item?.created_at)}
+          />
+        </View>
+        
+        <View style={styles.headerRight}>
+          <View style={[styles.statusBadge, {backgroundColor: getStatusColor(item?.status)}]}>
+            <Medium
+              fontSize={mvs(10)}
+              color={colors.white}
+              label={item?.status || 'N/A'}
+              style={styles.statusText}
+            />
+          </View>
+          <Icon 
+            name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
+            size={mvs(24)} 
+            color={colors.primary} 
+          />
+        </View>
+      </View>
+
+      {isExpanded && (
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="person" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Name:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.contact_name || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="email" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Email:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.contact_email || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="subject" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Subject:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.contact_other_subject || 'N/A'}
+              numberOfLines={2}
+              style={styles.valueText}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="event" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Date:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={formatDate(item?.created_at)}
+              style={styles.valueText}
+            />
+          </View>
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="event" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Message:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={colors.primary}
+              label={item?.contact_message}
+              style={styles.valueText}
+              numberOfLines={3}
+            />
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.labelContainer}>
+              <Icon name="info" size={mvs(16)} color={colors.placeholder} />
+              <Regular
+                fontSize={mvs(13)}
+                color={colors.placeholder}
+                label={'Status:'}
+                style={styles.labelText}
+              />
+            </View>
+            <Medium
+              fontSize={mvs(14)}
+              color={getStatusColor(item?.status)}
+              label={item?.status || 'N/A'}
+              style={[styles.valueText, {fontWeight: '500'}]}
+            />
+          </View>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 
